@@ -1,0 +1,10 @@
+# size, lores (profile 1). MIT, AmiCradle Team.
+image size
+size 7 7
+......#
+.....##
+....#.#
+...#..#
+..#...#
+.#....#
+#######

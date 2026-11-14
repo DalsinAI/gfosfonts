@@ -1,0 +1,10 @@
+# depth, hires 1:2 (profile 2), the lores drawing with every column twice for tall pixels. MIT, AmiCradle Team.
+image depth
+size 14 7
+########......
+##....##......
+##..##########
+######oooooo##
+....##oooooo##
+....##oooooo##
+....##########

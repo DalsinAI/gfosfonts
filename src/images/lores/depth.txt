@@ -1,0 +1,10 @@
+# depth, lores (profile 1). MIT, AmiCradle Team.
+image depth
+size 7 7
+####...
+#..#...
+#.#####
+###ooo#
+..#ooo#
+..#ooo#
+..#####

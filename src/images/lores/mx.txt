@@ -1,0 +1,10 @@
+# mx, lores (profile 1). MIT, AmiCradle Team.
+image mx
+size 7 7
+.......
+..###..
+.#####.
+.#####.
+.#####.
+..###..
+.......

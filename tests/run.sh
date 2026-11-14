@@ -5,6 +5,8 @@ set -e
 cd "$(dirname "$0")/.."
 python3 tests/test_gridfont.py
 python3 tests/test_amigafont.py
+python3 tests/test_sysimages.py
+python3 tools/sysimages.py check
 if [ -n "$GFOPENFONT" ]; then
     T=$(mktemp -d); trap 'rm -rf "$T"' EXIT
     cmake -S "$GFOPENFONT" -B "$T/of" -DCMAKE_BUILD_TYPE=Release >/dev/null && make -C "$T/of" -j4 openfont >/dev/null

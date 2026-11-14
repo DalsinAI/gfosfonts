@@ -1,0 +1,10 @@
+# iconify, lores (profile 1). MIT, AmiCradle Team.
+image iconify
+size 7 7
+.......
+.......
+..###..
+..#.#..
+..###..
+.......
+#######
