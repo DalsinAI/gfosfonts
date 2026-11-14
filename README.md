@@ -1,9 +1,12 @@
-# gfosfonts
+# GFOS Fonts
+
+GFOS Sans and GFOS Mono: hand-corrected bitmap fonts for GFOS, derived from DejaVu.
+
 
 GFOS's default fonts, drawn by hand pixel by pixel (Dale, 13 Nov 2026: "we should hand draw our
 default fonts", "correcting these"). Decision: amicradle-teams `teams/DECISION-HANDDRAWN-FONTS-20261113-1954.md`.
 
-Status: **specimen sheet only, for Dale to judge** (second cut, 14 Nov: the ASCII punctuation added). Nothing here is a default yet.
+Status: Dale approved the direction from the second sheet (14 Nov 04:36: "yes, go for it"). Third cut: Latin-1's accented letters, the letters with no plain base and most symbols. Nothing here is a default yet: Dale sees it on a real screen first.
 
 ![GFOS Sans 13 px against today's DejaVu Sans](specimens/gfos-sans-13-vs-dejavu.png)
 
@@ -11,9 +14,9 @@ Status: **specimen sheet only, for Dale to judge** (second cut, 14 Nov: the ASCI
 | File | What |
 | --- | --- |
 | `src/dejavu-sans-13-today.txt` | DejaVu Sans at 13 px exactly as GFOS draws it today (the `_ttf` font OpenBench uses), dumped by `tools/dump_grid` |
-| `src/gfos-sans-13-hand.txt` | the characters corrected by hand so far: a-z, A-Z, 0-9 and all the ASCII punctuation |
+| `src/gfos-sans-13-hand.txt` | the characters corrected by hand so far: a-z, A-Z, 0-9, all the ASCII punctuation, ß æ Æ ø Ø ð Ð þ Þ µ and 15 Latin-1 symbols |
 | `src/gfos-sans-13.txt` | GFOS Sans Regular 13 px: the hand set, and Latin-1's accented letters made from it (`compose`), over today's render (`gridfont.py merge`) |
-| `specimens/gfos-sans-13-vs-dejavu.png` | the specimen sheet: both faces, actual size and at 4x |
+| `specimens/gfos-sans-13-vs-dejavu.png`, `specimens/gfos-sans-13-latin1-20261114.png` | the specimen sheets: both faces, actual size and at 4x |
 | `tools/dump_grid.c` | dumps a TrueType face as GFOS draws it, as editable grids |
 | `tools/gridfont.py` | reads, checks, merges and draws the grids |
 
@@ -50,19 +53,18 @@ the same size as FONTS:_ttf/DejaVuSans.ttf on Instance-32).
 - x-height 7 px (rows 3-9); capitals and figures 9 px (rows 1-9); figures all 7 wide.
 
 `gridfont.py check` finds 2 px stems and 2x2 blobs in the hand set. Today's DejaVu render
-has problems in the same characters (233 in the first 63 alone); GFOS Sans has none in its 94.
+has problems in the same characters (233 in the first 63 alone); GFOS Sans has none in its hand-drawn and composed characters.
 
 ## Tests
-`tests/run.sh` (71 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
+`tests/run.sh` (182 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
 and checks that today's render is unchanged.
 
-## Next (after Dale's verdict on this sheet)
-The rest of ISO-Latin-1 ($A0-$FF; $80-$9F left empty), Bold, 11 and 16 px, GFOS Mono 8x16 and 10x20,
+## Next (Dale, 14 Nov 04:36: finish Latin-1, then the other sizes, Bold and Mono)
+The last Latin-1 symbols (§ © ® £ ¥ ¢ ¹ ² ³ ª º ¼ ½ ¾ ¶ ¤; $80-$9F left empty), Bold, 11 and 16 px, GFOS Mono 8x16 and 10x20,
 hires (1:2) cuts, then the build to Amiga diskfont `.font` files.
 
 ## Licences
-Tools and documents: MIT (`LICENSE`). The fonts start from DejaVu Sans, whose changes are public
-domain over Bitstream Vera; the Vera licence is in `LICENSE-VERA.txt`. As it asks, the changed fonts
-have their own names (GFOS Sans, GFOS Mono) and use neither "Bitstream" nor "Vera".
+- **The fonts** (GFOS Sans, GFOS Mono and anything else derived from DejaVu here) are under the Bitstream Vera licence, with DejaVu's changes in the public domain. See `LICENSE-FONTS`. That licence lets the glyphs be changed only if the changed fonts are renamed, so no font in this repository may have "Bitstream" or "Vera" in its name.
+- **The tools** in this repository (converters, build and check scripts) are MIT. See `LICENSE-TOOLS`.
 
 Designed, tested and delivered by The AmiCradle Team.

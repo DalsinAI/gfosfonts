@@ -70,7 +70,7 @@ def read_hand(path):
 def write(glyphs, size, ascent, name, hand, out):
     out.write(f"# {name}: GFOS's own pixel font. Hand-drawn characters marked 'hand';\n")
     out.write("# the rest still DejaVu Sans as GFOS draws it today (tools/dump_grid), to be redrawn.\n")
-    out.write("# DejaVu changes are public domain; Bitstream Vera licence: LICENSE-VERA.txt.\n")
+    out.write("# DejaVu changes are public domain; the fonts' licence: LICENSE-FONTS.\n")
     out.write(f"size {size}\nascent {ascent}\n\n")
     for cp in sorted(glyphs):
         w, o, rows = glyphs[cp]

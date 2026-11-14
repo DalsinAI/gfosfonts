@@ -1,6 +1,6 @@
 # GFOS Sans Regular 13: GFOS's own pixel font. Hand-drawn characters marked 'hand';
 # the rest still DejaVu Sans as GFOS draws it today (tools/dump_grid), to be redrawn.
-# DejaVu changes are public domain; Bitstream Vera licence: LICENSE-VERA.txt.
+# DejaVu changes are public domain; the fonts' licence: LICENSE-FONTS.
 size 13
 ascent 10
 
