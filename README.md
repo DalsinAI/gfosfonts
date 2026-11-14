@@ -19,6 +19,7 @@ Status: Dale approved the direction from the second sheet (14 Nov 04:36: "yes, g
 | `specimens/gfos-sans-13-vs-dejavu.png`, `specimens/gfos-sans-13-latin1-20261114.png` | the specimen sheets: both faces, actual size and at 4x |
 | `tools/dump_grid.c` | dumps a TrueType face as GFOS draws it, as editable grids |
 | `tools/gridfont.py` | reads, checks, merges and draws the grids |
+| `tools/amigafont.py` | builds the Amiga bitmap font from a grid: `amigafont.py build src/gfos-sans-13.txt GFOSSans OUT` writes `OUT/GFOSSans.font` and `OUT/GFOSSans/13` for FONTS: (build outputs stay out of git) |
 
 ## The grid format
 Plain text, one file per face and size, so every change is a readable diff:
@@ -56,7 +57,7 @@ the same size as FONTS:_ttf/DejaVuSans.ttf on Instance-32).
 has problems in the same characters (233 in the first 63 alone); GFOS Sans has none in its hand-drawn and composed characters.
 
 ## Tests
-`tests/run.sh` (185 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
+`tests/run.sh` (185 + 15 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
 and checks that today's render is unchanged.
 
 ## Next (Dale, 14 Nov 04:36: finish Latin-1, then the other sizes, Bold and Mono)
