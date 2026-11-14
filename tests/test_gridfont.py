@@ -210,6 +210,39 @@ check("#" in gm[ord("f")][2][0] and "#" not in gm[ord("t")][2][0] and gm[ord("t"
 mm = gridfont.compose({c: gm[c][2] for c in gm if c not in gridfont.LATIN1 and c not in gridfont.CEDILLA}, 13)
 check(all(gm[c][2] == mm[c] for c in mm) and len(mm) == 53, "Mono: the accented letters made from the mono letters")
 
+# Bold and Mono at 11 and 16 px (Lisette, 14 Nov): the same rules on Regular 11 and 16
+for sz, asc, mw, bh, mh in ((11, 9, 7, '#$%¢¤ª®¶ºðø"¨', "%&@AMNVWXYmw©®¼½¾ÆÐæijlIfrt"),
+                            (16, 13, 10, '$¢ªºð"¨', "%@Wm©®¼½¾ÆæijlIfrt")):
+    gr, _, _ = gridfont.read(f"src/gfos-sans-{sz}.txt")
+    for kind, hand, fam in (("bold", f"src/gfos-sans-bold-{sz}-hand.txt", "GFOS Sans Bold"),
+                            ("mono", f"src/gfos-mono-{sz}-hand.txt", "GFOS Mono")):
+        path = hand.replace("-hand", "")
+        out = subprocess.run([sys.executable, "tools/gridfont.py", kind, f"src/gfos-sans-{sz}.txt", hand, f"{fam} {sz}"],
+                             capture_output=True, text=True)
+        check(out.returncode == 0 and out.stdout == open(path, encoding="utf-8").read(), f"{path} is the {kind}, as committed")
+        gx, sx, ax = gridfont.read(path)
+        hx = gridfont.read_hand(hand)
+        check(sx == sz and ax == asc and sorted(gx) == sorted(gr), f"{fam} {sz}: ascent {asc}, the same 191 characters")
+        check(all(len(r) == sz and len({len(x) for x in r}) == 1 for _, _, r in gx.values()), f"{fam} {sz}: {sz} rows, one width each")
+        made = {c: gx[c][2] for c in gx if c not in gridfont.LATIN1 and c not in gridfont.CEDILLA}
+        mx = gridfont.compose(made, sz)
+        check(all(gx[c][2] == mx[c] for c in mx) and len(mx) == 53, f"{fam} {sz}: the accented letters made from its letters")
+        if kind == "bold":
+            check(all(gx[c][0] == gr[c][0] + 1 for c in gr if c not in hx and c not in gridfont.LATIN1 and c not in gridfont.CEDILLA),
+                  f"Bold {sz}: every smeared glyph one column wider than Regular")
+            check(all(gridfont.counters(gx[c][2]) >= gridfont.counters(gr[c][2]) for c in gr if c not in hx),
+                  f"Bold {sz}: no counter filled outside the hand file")
+            for ch in "aeoBR8":
+                check(gridfont.counters(gx[ord(ch)][2]) == gridfont.counters(gr[ord(ch)][2]), f"Bold {sz} {ch}: its counters stay open")
+            check(".##.##." in gx[0x22][2] and ".##.##." in gx[0xA8][2], f"Bold {sz}: \" and ¨ keep their two marks apart")
+            check(set(map(ord, bh)) <= set(hx), f"Bold {sz}: {bh} drawn by hand")
+        else:
+            check({w for w, _, _ in gx.values()} == {mw}, f"Mono {sz}: every glyph {mw} wide")
+            check(all(all(row[mw - 1] == "." for row in gx[c][2]) for c in gx if c != ord("_")), f"Mono {sz}: column {mw - 1} clear, the gap")
+            check(gridfont.check(path) == 0, f"Mono {sz}: 1 px stems, no blobs")
+            check(set(map(ord, mh)) <= set(hx), f"Mono {sz}: the wide ones and the slabs drawn by hand")
+check(gridfont.fit(["######"], 7) is not None and gridfont.fit(["#######"], 7) is None, "fit: 6 columns of ink in a 7-wide cell")
+
 # the specimen draws
 with tempfile.TemporaryDirectory() as d:
     p = os.path.join(d, "s.png")
