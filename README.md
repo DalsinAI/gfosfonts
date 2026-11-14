@@ -28,7 +28,7 @@ Status: Dale approved the direction from the second sheet (14 Nov 04:36: "yes, g
 | `src/gfos-mono-13.txt` | GFOS Mono 13 px, ISO-Latin-1: every character 8 wide (`gridfont.py mono`) |
 | `src/gfos-mono-11-hand.txt`, `src/gfos-mono-16-hand.txt` | GFOS Mono 11 and 16 px: the characters drawn by hand (too wide for 6 or 9 columns, and the slabs) |
 | `src/gfos-mono-11.txt`, `src/gfos-mono-16.txt` | GFOS Mono 11 px (7 wide) and 16 px (10 wide), ISO-Latin-1 |
-| `specimens/gfos-sans-13-vs-dejavu.png`, `specimens/gfos-sans-13-latin1-20261114.png` | the specimen sheets: both faces, actual size and at 4x |
+| `specimens/*.png` | the specimen sheets, actual size and at 4x: Sans 13 against today's DejaVu render and its Latin-1, Sans 11 and 16 against 13, Bold 13, Mono 13, and Bold and Mono at 11 and 16 |
 | `tools/dump_grid.c` | dumps a TrueType face as GFOS draws it, as editable grids |
 | `tools/gridfont.py` | reads, checks, merges and draws the grids |
 | `tools/amigafont.py` | builds the Amiga bitmap font from a grid: `amigafont.py build src/gfos-sans-13.txt GFOSSans OUT src/gfos-sans-11.txt src/gfos-sans-16.txt` writes `OUT/GFOSSans.font` (every size) and `OUT/GFOSSans/11`, `13`, `16` for FONTS: (build outputs stay out of git) |
@@ -108,12 +108,14 @@ are drawn in `src/gfos-mono-13-hand.txt`. The Amiga font `GFOSMono.font` is mark
 has problems in the same characters (233 in the first 63 alone); GFOS Sans has none in its hand-drawn and composed characters.
 
 ## Tests
-`tests/run.sh` (422 + 29 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
+`tests/run.sh` (467 + 31 checks; among them, every face and size built and its glyph strip checked under
+65,536 px wide, since `tf_CharLoc`'s offsets are 16 bits, and `amigafont.py` refuses a wider one). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
 and checks that today's render is unchanged.
 
 ## Next (Dale, 14 Nov 04:36: finish Latin-1, then the other sizes, Bold and Mono)
-Latin-1 is complete ($80-$9F left empty). Bold, 11 and 16 px, GFOS Mono 8x16 and 10x20,
-hires (1:2) cuts, then the build to Amiga diskfont `.font` files.
+Done: Latin-1 ($80-$9F left empty); GFOS Sans, Sans Bold and Mono at 11, 13 and 16 px (Mono 7, 8 and 10 wide);
+the build to Amiga diskfont `.font` files (`tools/amigafont.py`), which gfopenup's GFOSFonts part installs in
+FONTS:. Still open from the list: GFOS Mono 8x16 and 10x20 as first planned, and hires (1:2) cuts.
 
 ## Licences
 - **The fonts** (GFOS Sans, GFOS Mono and anything else derived from DejaVu here) are under the Bitstream Vera licence, with DejaVu's changes in the public domain. See `LICENSE-FONTS`. That licence lets the glyphs be changed only if the changed fonts are renamed, so no font in this repository may have "Bitstream" or "Vera" in its name.
