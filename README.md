@@ -16,10 +16,12 @@ Status: Dale approved the direction from the second sheet (14 Nov 04:36: "yes, g
 | `src/dejavu-sans-13-today.txt` | DejaVu Sans at 13 px exactly as GFOS draws it today (the `_ttf` font OpenBench uses), dumped by `tools/dump_grid` |
 | `src/gfos-sans-13-hand.txt` | the characters drawn by hand: a-z, A-Z, 0-9, all the ASCII punctuation, and Latin-1's letters with no plain base and its symbols |
 | `src/gfos-sans-13.txt` | GFOS Sans Regular 13 px: the hand set, and Latin-1's accented letters made from it (`compose`), over today's render (`gridfont.py merge`) |
+| `src/gfos-sans-11-hand.txt` | GFOS Sans 11 px: the characters drawn by hand at 11 px (a e k z K S X Z, the figures 2 4 9, $ % & @ < >, and 21 Latin-1 symbols and letters with no plain base) |
+| `src/gfos-sans-11.txt` | GFOS Sans Regular 11 px, ISO-Latin-1: the 11 px hand set, the accented letters made from its own letters (`compose`), the rest made from the 13 px face (`gridfont.py shrink`) |
 | `specimens/gfos-sans-13-vs-dejavu.png`, `specimens/gfos-sans-13-latin1-20261114.png` | the specimen sheets: both faces, actual size and at 4x |
 | `tools/dump_grid.c` | dumps a TrueType face as GFOS draws it, as editable grids |
 | `tools/gridfont.py` | reads, checks, merges and draws the grids |
-| `tools/amigafont.py` | builds the Amiga bitmap font from a grid: `amigafont.py build src/gfos-sans-13.txt GFOSSans OUT` writes `OUT/GFOSSans.font` and `OUT/GFOSSans/13` for FONTS: (build outputs stay out of git) |
+| `tools/amigafont.py` | builds the Amiga bitmap font from a grid: `amigafont.py build src/gfos-sans-13.txt GFOSSans OUT src/gfos-sans-11.txt` writes `OUT/GFOSSans.font` (both sizes), `OUT/GFOSSans/11` and `OUT/GFOSSans/13` for FONTS: (build outputs stay out of git) |
 
 ## The grid format
 Plain text, one file per face and size, so every change is a readable diff:
@@ -47,6 +49,17 @@ with no `OT_YSizeFactor` (FONTS:DejaVuSans.otag has none, so the em is 13 px), b
 right under 15 px to the em, and the descent kept whole. The DejaVu Sans used is 2.37 (759,720 bytes,
 the same size as FONTS:_ttf/DejaVuSans.ttf on Instance-32).
 
+## GFOS Sans 11 px
+For the chipset profiles (1-3), once Dale approves it. 11 rows, ascent 9: row 0 clear for marks, ascenders
+rows 1-8, capitals and figures rows 2-8 (7 px), x-height rows 4-8 (5 px), descenders rows 9-10, figures all 6
+wide. `gridfont.py shrink` makes it from the 13 px face: above the x-height nothing changes, the x-height loses
+two rows and the descent one, each time one of two like rows (a straight stem or a bowl's sides) nearest the
+middle, and a glyph 7 or more wide loses one of two like inner columns. A glyph it can't make well is drawn in
+`src/gfos-sans-11-hand.txt`, which wins. Latin-1's accented letters are made from the 11 px letters the
+same way as at 13 px: a small letter's mark in rows 1-2, a capital lowered to rows 3-8 under its mark.
+
+![GFOS Sans 11 px over 13 px](specimens/gfos-sans-11-vs-13-20261114.png)
+
 ## Rules for the hand-drawn set (from the decision)
 - Stems 1 px at the small sizes, the same in every letter.
 - Round shoulders on n, m, h, a and d: a one-pixel diagonal step, never a 2x2 blob.
@@ -57,7 +70,7 @@ the same size as FONTS:_ttf/DejaVuSans.ttf on Instance-32).
 has problems in the same characters (233 in the first 63 alone); GFOS Sans has none in its hand-drawn and composed characters.
 
 ## Tests
-`tests/run.sh` (185 + 15 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
+`tests/run.sh` (284 + 23 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
 and checks that today's render is unchanged.
 
 ## Next (Dale, 14 Nov 04:36: finish Latin-1, then the other sizes, Bold and Mono)

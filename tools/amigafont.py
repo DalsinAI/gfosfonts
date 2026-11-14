@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """amigafont: a grid font (src/*.txt) as an Amiga bitmap font, the files diskfont.library loads from FONTS:.
 
-  amigafont.py build FONT.txt NAME OUTDIR   writes OUTDIR/NAME.font (the contents file) and OUTDIR/NAME/<size>
+  amigafont.py build FONT.txt NAME OUTDIR [MORE.txt...]   writes OUTDIR/NAME/<size> for each grid and
+                                            OUTDIR/NAME.font (the contents file) listing every size
   amigafont.py dump OUTDIR/NAME/<size>      prints what a font file holds (size, baseline, chars, widths)
 
 The font file is one code hunk (MOVEQ #-1,D0; RTS so that running it by mistake does nothing), then the
@@ -150,19 +151,25 @@ def glyph_rows(f, c):
                     for x in range(w)) for y in range(f["size"])]
 
 
-def build(src, name, outdir):
-    glyphs, size, ascent = gridfont.read(src)
+def build(src, name, outdir, *more):
+    """one font file per grid (one size each), and the contents file listing the sizes, smallest first"""
     os.makedirs(os.path.join(outdir, name), exist_ok=True)
-    with open(os.path.join(outdir, name, str(size)), "wb") as fp:
-        fp.write(font_file(glyphs, size, ascent, f"{name}.font"))
+    sizes = []
+    for path in (src,) + more:
+        glyphs, size, ascent = gridfont.read(path)
+        if size in sizes:
+            raise SystemExit(f"{path}: a second {size} px grid")
+        sizes.append(size)
+        with open(os.path.join(outdir, name, str(size)), "wb") as fp:
+            fp.write(font_file(glyphs, size, ascent, f"{name}.font"))
     with open(os.path.join(outdir, name + ".font"), "wb") as fp:
-        fp.write(contents_file(name, [size]))
+        fp.write(contents_file(name, sorted(sizes)))
 
 
 if __name__ == "__main__":
     a = sys.argv[1:]
-    if len(a) == 4 and a[0] == "build":
-        build(a[1], a[2], a[3])
+    if len(a) >= 4 and a[0] == "build":
+        build(*a[1:])
     elif len(a) == 2 and a[0] == "dump":
         f = read(open(a[1], "rb").read())
         print(f"{f['name']}: {f['size']} px, baseline {f['baseline']}, chars ${f['lo']:02X}-${f['hi']:02X}, "
