@@ -5,8 +5,8 @@
   gridfont.py shrink FONT13.txt HAND11.txt NAME > OUT.txt  the 11 px cut: ASCII from the 13 px face, rows dropped,
                                                         with the 11 px hand file over it
   gridfont.py grow FONT13.txt HAND16.txt NAME > OUT.txt    the 16 px cut the same way, rows and a column added
-  gridfont.py bold FONT13.txt HANDB.txt NAME > OUT.txt    GFOS Sans Bold: the 13 px face with 2 px stems
-  gridfont.py mono FONT13.txt HANDM.txt NAME > OUT.txt    GFOS Mono: every character 8 wide
+  gridfont.py bold FONT.txt HANDB.txt NAME > OUT.txt      GFOS Sans Bold: the Regular face (11, 13, 16) with 2 px stems
+  gridfont.py mono FONT.txt HANDM.txt NAME > OUT.txt      GFOS Mono: every character 7, 8 or 10 wide (11, 13, 16 px)
   gridfont.py check FONT.txt                            the rules: rows, widths, 1 px stems in the hand set
   gridfont.py specimen OUT.png LABEL1=A.txt LABEL2=B.txt  Dale's specimen sheet, the faces one under the other
 
@@ -341,10 +341,10 @@ def bold(base, handp, name):
         if len(rows) != size:
             raise SystemExit(f"{chr(cp)!r}: {len(rows)} rows, not {size}")
         glyphs[cp] = [len(rows[0]), 0, rows]
-    for cp, rows in compose({cp: g[2] for cp, g in glyphs.items()}, 13).items():
+    for cp, rows in compose({cp: g[2] for cp, g in glyphs.items()}, size).items():
         glyphs[cp] = [len(rows[0]), 0, rows]
     write(glyphs, size, ascent, name, set(hand), sys.stdout,
-          "# the rest GFOS Sans Regular 13 px set again a pixel to the right (gridfont.py bold).\n")
+          f"# the rest GFOS Sans Regular {size} px set again a pixel to the right (gridfont.py bold).\n")
     return glyphs
 
 # ---- GFOS Mono 13 px (14 Nov 2026) ----
@@ -352,6 +352,7 @@ def bold(base, handp, name):
 # ink is 7 columns or fewer is centred in columns 0-6, so column 7 is always the clear gap between characters; the
 # wider ones are drawn in the Mono hand file, and the accented letters are made from the mono letters.
 MONO_W = 8
+MONO_WIDTH = {11: 7, 13: 8, 16: 10}   # the cell at each size: 11 px one column narrower, 16 px two wider
 
 def fit(rows, width=MONO_W):
     """rows' ink centred in columns 0 to width - 2; None when it is wider than that"""
@@ -363,23 +364,24 @@ def fit(rows, width=MONO_W):
     return ["." * x0 + r[lo:hi + 1] + "." * (width - x0 - (hi - lo + 1)) for r in rows]
 
 def mono(base, handp, name):
-    """GFOS Mono 13 px"""
+    """GFOS Mono at the base face's size, MONO_WIDTH[size] wide"""
     g13, size, ascent = read(base)
+    mw = MONO_WIDTH[size]
     hand = read_hand(handp)
     glyphs = {}
     made_from = set(LATIN1) | set(CEDILLA)
     for cp in sorted(g13):
         if cp in made_from: continue
-        rows = hand.get(cp) or fit(g13[cp][2])
+        rows = hand.get(cp) or fit(g13[cp][2], mw)
         if rows is None:
-            raise SystemExit(f"{chr(cp)!r}: too wide for {MONO_W} columns; draw it in {handp}")
-        if len(rows) != size or len(rows[0]) != MONO_W:
-            raise SystemExit(f"{chr(cp)!r}: not {size} rows of {MONO_W}")
-        glyphs[cp] = [MONO_W, 0, rows]
-    for cp, rows in compose({cp: g[2] for cp, g in glyphs.items()}, 13).items():
-        glyphs[cp] = [MONO_W, 0, rows]
+            raise SystemExit(f"{chr(cp)!r}: too wide for {mw} columns; draw it in {handp}")
+        if len(rows) != size or len(rows[0]) != mw:
+            raise SystemExit(f"{chr(cp)!r}: not {size} rows of {mw}")
+        glyphs[cp] = [mw, 0, rows]
+    for cp, rows in compose({cp: g[2] for cp, g in glyphs.items()}, size).items():
+        glyphs[cp] = [mw, 0, rows]
     write(glyphs, size, ascent, name, set(hand), sys.stdout,
-          "# the rest GFOS Sans Regular 13 px centred in 8 columns (gridfont.py mono).\n")
+          f"# the rest GFOS Sans Regular {size} px centred in {mw} columns (gridfont.py mono).\n")
     return glyphs
 
 def stems(rows):
@@ -459,7 +461,7 @@ def specimen(out, faces):
         for ln in lines:
             blocks.append((draw(g, ln), Z, "zoom"))
     width = max(len(b[0][0]) * b[1] for b in blocks) + 2 * M
-    height = sum(len(b[0]) * b[1] + GAP for b in blocks) + 2 * M + GAP * len(loaded)
+    height = sum(len(b[0]) * b[1] + GAP for b in blocks) + 2 * M + 2 * GAP * len(loaded)   # each label after the first: 2 gaps
     im = Image.new("RGB", (width, height), (255, 255, 255))
     px = im.load()
     y = M
