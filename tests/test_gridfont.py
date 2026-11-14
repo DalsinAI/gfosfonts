@@ -259,10 +259,19 @@ for fam in ("sans", "sans-bold", "mono"):
     for sz in (11, 13, 16):
         path = f"src/gfos-{fam}-{sz}.txt"
         gx = gridfont.read(path)[0]
-        inked = [chr(c) for c, (w, o, rows) in gx.items() if any(r[w - 1 - o] == "#" for r in rows if len(r) >= w - o)]
+        inked = [chr(c) for c, (w, o, rows) in gx.items() if any(r[o + w - 1] == "#" for r in rows if len(r) >= o + w)]
         check(not inked, f"{path}: every glyph's last advance column blank (space >= kern + ink + 1){' ' + ''.join(inked) if inked else ''}")
 check(gridfont.blank_right({66: [3, 0, ["##.", "###"]]})[66] == [4, 0, ["##..", "###."]], "blank_right: a B inked to the edge gets one more column")
 check(gridfont.blank_right({66: [3, 0, ["##.", "##."]]})[66] == [3, 0, ["##.", "##."]], "blank_right: a blank last column stays as it is")
+# with an origin line the rows start o columns before the origin: the advance's last column is row index o + w - 1
+check(gridfont.blank_right({106: [2, 1, ["..#", "###"]]})[106] == [3, 1, ["..#.", "###."]],
+      "blank_right: a glyph with an origin is padded on its advance's last column (o + w - 1)")
+check(gridfont.blank_right({106: [2, 1, ["#..", "##."]]})[106] == [2, 1, ["#..", "##."]],
+      "blank_right: with an origin, ink left of the advance's last column needs no pad")
+# Londo's review of #10: the 16 px r keeps the arm grow gave it before the blank column (drawn in the hand file)
+r16, rb16 = gridfont.read("src/gfos-sans-16.txt")[0][0x72], gridfont.read("src/gfos-sans-bold-16.txt")[0][0x72]
+check(r16[0] == 6 and r16[2][5] == ".#.##.", f"16 px r: width 6, arm .#.##. (got {r16[0]}, {r16[2][5]})")
+check(rb16[0] == 7 and rb16[2][5] == ".#####.", f"Bold 16 px r: width 7, arm .#####. (got {rb16[0]}, {rb16[2][5]})")
 
 print(f"test_gridfont: {oks + fails} checks, {fails} failed")
 sys.exit(1 if fails else 0)

@@ -75,10 +75,12 @@ def read_hand(path):
 def blank_right(glyphs):
     """Every glyph keeps one blank column at the right of its advance (Ivanova, 14 Nov 2026): OS 3.2's
     listbrowser loses a right-justified cell's last column, so ink there reads 'MB' as 'ME'. For a bitmap
-    face that is space >= kern + ink width + 1. A glyph inked in its last column gets one more, blank."""
+    face that is space >= kern + ink width + 1. A glyph inked in its last column gets one more, blank. With an
+    origin line the rows start o columns before the origin, so the advance's last column is row index o + w - 1."""
     for cp, (w, o, rows) in list(glyphs.items()):
-        if any(len(r) >= w and r[w - 1] == "#" for r in rows):
-            glyphs[cp] = [w + 1, o, [r + "." for r in rows]]
+        last = o + w - 1
+        if any(len(r) > last and r[last] == "#" for r in rows):
+            glyphs[cp] = [w + 1, o, [r + "." * max(0, last + 2 - len(r)) for r in rows]]
     return glyphs
 
 def write(glyphs, size, ascent, name, hand, out, note=None):
