@@ -29,8 +29,11 @@ Status: Dale approved the direction from the second sheet (14 Nov 04:36: "yes, g
 | `src/gfos-mono-11-hand.txt`, `src/gfos-mono-16-hand.txt` | GFOS Mono 11 and 16 px: the characters drawn by hand (too wide for 6 or 9 columns, and the slabs) |
 | `src/gfos-mono-11.txt`, `src/gfos-mono-16.txt` | GFOS Mono 11 px (7 wide) and 16 px (10 wide), ISO-Latin-1 |
 | `specimens/gfos-sans-13-vs-dejavu.png`, `specimens/gfos-sans-13-latin1-20261114.png` | the specimen sheets: both faces, actual size and at 4x |
+| `src/images/<set>/<image>.txt` | the gadget images (close, depth, zoom, iconify, size, arrows, checkmark, radio, Amiga key, sub-item mark) in four sets, lores, hires 1:2, medres and large, as pen grids ([src/images/README.md](src/images/README.md)) |
+| `specimens/gadget-images-20261114.png` | today's gadget glyphs beside the drawn sets, on the title bar and the window, at 1x and 4x |
 | `tools/dump_grid.c` | dumps a TrueType face as GFOS draws it, as editable grids |
 | `tools/gridfont.py` | reads, checks, merges and draws the grids |
+| `tools/sysimages.py` | reads and checks the gadget image sets and draws their specimen |
 | `tools/amigafont.py` | builds the Amiga bitmap font from a grid: `amigafont.py build src/gfos-sans-13.txt GFOSSans OUT src/gfos-sans-11.txt src/gfos-sans-16.txt` writes `OUT/GFOSSans.font` (every size) and `OUT/GFOSSans/11`, `13`, `16` for FONTS: (build outputs stay out of git) |
 
 ## The grid format

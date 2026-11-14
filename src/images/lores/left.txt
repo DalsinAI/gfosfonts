@@ -1,0 +1,10 @@
+# left, lores (profile 1). MIT, AmiCradle Team.
+image left
+size 7 7
+.....#.
+....##.
+...###.
+..####.
+...###.
+....##.
+.....#.

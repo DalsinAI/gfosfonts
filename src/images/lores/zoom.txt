@@ -1,0 +1,10 @@
+# zoom, lores (profile 1). MIT, AmiCradle Team.
+image zoom
+size 7 7
+#######
+#######
+#.....#
+####..#
+#..#..#
+#..#..#
+#######

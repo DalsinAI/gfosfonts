@@ -1,0 +1,10 @@
+# submenu, lores (profile 1). MIT, AmiCradle Team.
+image submenu
+size 7 7
+.......
+.#..#..
+..#..#.
+...#..#
+..#..#.
+.#..#..
+.......

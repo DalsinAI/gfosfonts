@@ -1,0 +1,14 @@
+# depth, medres (profiles 3, 4, 5). MIT, AmiCradle Team.
+image depth
+size 11 11
+#######....
+#.....#....
+#.....#....
+#.....#....
+#...#######
+#...#######
+#####ooooo#
+....#ooooo#
+....#ooooo#
+....#ooooo#
+....#######

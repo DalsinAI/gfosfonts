@@ -1,0 +1,10 @@
+# check, lores (profile 1). MIT, AmiCradle Team.
+image check
+size 7 7
+.......
+......#
+.....##
+#...##.
+##.##..
+.###...
+..#....
