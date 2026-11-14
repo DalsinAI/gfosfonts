@@ -1,0 +1,91 @@
+GFOSFonts 1.0 (14.11.2026)
+==========================
+
+GFOS's own screen fonts: GFOS Sans, GFOS Sans Bold and GFOS Mono, bitmap fonts
+corrected by hand pixel by pixel, each in 11, 13 and 16 pixels, for FONTS:.
+They cover ISO-Latin-1 ($20-$7E and $A0-$FF); $7F-$9F draw an empty box.
+
+Source:  https://github.com/DalsinAI/gfosfonts
+Version: 1.0, 14 November 2026
+
+
+The nine fonts
+--------------
+
+  Font file              Sizes         What
+  GFOSSans.font          11, 13, 16    GFOS Sans, proportional
+  GFOSSansBold.font      11, 13, 16    GFOS Sans Bold, proportional, 2 pixel stems
+                                       drawn into the font (not a smeared Regular)
+  GFOSMono.font          11, 13, 16    GFOS Mono, fixed width: 7, 8 and 10 pixels
+                                       wide, for the Shell, code and columns
+
+The 13 is the size made for most screens, the 11 for low resolution screens and
+the 16 for large ones. Pick them in Font prefs (SYS:Prefs/Font) or in any program
+that asks for a font.
+
+
+What is in this archive
+-----------------------
+
+  Fonts/        the fonts, laid out exactly as they go into FONTS:
+                (GFOSSans.font and the drawer GFOSSans/ with 11, 13 and 16,
+                and the same for GFOSSansBold and GFOSMono)
+  Specimens/    the specimen sheets, as PNG pictures
+  Install       a Shell script that copies the fonts to FONTS:
+  ReadMe        this file
+  LICENSE-FONTS the fonts' licence (the Bitstream Vera licence)
+  LICENSE-TOOLS the licence of the gfosfonts tools that built them (MIT)
+  SHA256SUMS    the SHA-256 of every other file here
+
+
+Installing
+----------
+
+With the Install script, from a Shell:
+
+    CD GFOSFonts-1.0
+    Execute Install
+
+It copies each of the three fonts to FONTS: unless a font of the same name is
+already there (FONTS:GFOSSans.font or the drawer FONTS:GFOSSans, and so on).
+A font that is already there is left as it is and named, so a font you have
+is never replaced without you asking. To replace it:
+
+    Execute Install FORCE
+
+which first copies the old .font file and drawer into the drawer Old/ beside
+the Install script, then puts this release's in their place. The new .font
+lists 11, 13 and 16 only; any other size you had in that drawer stays in it
+(and in Old/) but is no longer listed.
+
+By hand, from a Shell:
+
+    Copy GFOSFonts-1.0/Fonts/#? FONTS: ALL CLONE
+
+or copy the contents of Fonts/ to FONTS: with a file manager. Don't run
+FixFonts on them: the .font files here are already right.
+
+With GFOpenUp: GFOpenUp installs these same fonts (its GFOSFonts part, 1.0)
+with every install, and leaves a font of the same name that another program
+put there alone. The font files in this archive are byte for byte the ones
+GFOpenUp's GFOSFonts 1.0 part installs.
+
+Nothing here changes Font prefs: the fonts are offered, not made the
+system's fonts.
+
+
+Licence and where the fonts come from
+-------------------------------------
+
+The fonts are derived from DejaVu Sans 2.37 (https://dejavu-fonts.github.io/),
+which is based on Bitstream Vera, Copyright (c) 2003 by Bitstream, Inc. All
+Rights Reserved. Bitstream Vera is a trademark of Bitstream, Inc. DejaVu's
+changes are in the public domain. Our changes are under the same licence:
+the Bitstream Vera licence, in LICENSE-FONTS, which must go with every copy.
+As that licence requires for changed fonts, these are renamed: GFOS Sans,
+GFOS Sans Bold and GFOS Mono.
+
+The tools in the gfosfonts repository that build these files (gridfont.py,
+amigafont.py, dump_grid.c) are under the MIT licence, in LICENSE-TOOLS.
+
+The AmiCradle Team

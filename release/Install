@@ -1,0 +1,107 @@
+.KEY FACE,FORCE/S
+.BRA {
+.KET }
+; GFOSFonts 1.0: copies GFOS Sans, GFOS Sans Bold and GFOS Mono to FONTS:.
+; From a Shell, in this drawer:   Execute Install        or   Execute Install FORCE
+; A font already in FONTS: under the same name (its .font or its drawer) is
+; left as it is and named. FORCE replaces it, after copying the old .font and
+; drawer to Old/<name> here. The sizes go in before the .font that lists them,
+; so a copy that stops half way never lists a size that isn't there.
+; Install calls itself once for each font, with FACE set. Font prefs is not changed.
+If "{FACE}" EQ ""
+  FailAt 21
+  If NOT EXISTS Fonts/GFOSSans.font
+    Echo "Install: CD to the GFOSFonts-1.0 drawer first, then Execute Install"
+    FailAt 10
+    Quit 10
+  EndIf
+  If NOT EXISTS FONTS:
+    Echo "Install: there is no FONTS: to copy the fonts to"
+    FailAt 10
+    Quit 10
+  EndIf
+  Set GFOSFontsLeft "0"
+  Set GFOSFontsFailed "0"
+  Execute Install GFOSSans {FORCE}
+  Execute Install GFOSSansBold {FORCE}
+  Execute Install GFOSMono {FORCE}
+  FailAt 10
+  If "$GFOSFontsLeft" EQ "1"
+    Echo "Install: a font named above was already in FONTS: and was left as it was."
+    Echo "         Execute Install FORCE replaces it (the old files go to Old/ here)."
+  EndIf
+  If "$GFOSFontsFailed" EQ "1"
+    Echo "Install: not everything was copied; see the lines above."
+    UnSet GFOSFontsLeft
+    UnSet GFOSFontsFailed
+    UnSet GFOSFontsHave
+    UnSet GFOSFontsGo
+    Quit 10
+  EndIf
+  Echo "Install: done."
+  UnSet GFOSFontsLeft
+  UnSet GFOSFontsFailed
+  UnSet GFOSFontsHave
+  UnSet GFOSFontsGo
+Else
+  Set GFOSFontsHave "0"
+  Set GFOSFontsGo "1"
+  If EXISTS FONTS:{FACE}.font
+    Set GFOSFontsHave "1"
+  EndIf
+  If EXISTS FONTS:{FACE}
+    Set GFOSFontsHave "1"
+  EndIf
+  If "$GFOSFontsHave" EQ "1"
+    If "{FORCE}" EQ ""
+      Echo "{FACE}: already in FONTS:, left as it is."
+      Set GFOSFontsLeft "1"
+      Set GFOSFontsGo "0"
+    Else
+      Echo "{FACE}: replacing the one in FONTS:, its old files copied to Old/{FACE} first."
+      If NOT EXISTS Old
+        MakeDir Old
+      EndIf
+      If NOT EXISTS Old/{FACE}
+        MakeDir Old/{FACE}
+      EndIf
+      If EXISTS FONTS:{FACE}.font
+        Copy FONTS:{FACE}.font Old/{FACE} CLONE QUIET
+        If WARN
+          Set GFOSFontsGo "0"
+        EndIf
+      EndIf
+      If EXISTS FONTS:{FACE}
+        If NOT EXISTS Old/{FACE}/{FACE}
+          MakeDir Old/{FACE}/{FACE}
+        EndIf
+        Copy FONTS:{FACE} Old/{FACE}/{FACE} ALL CLONE QUIET
+        If WARN
+          Set GFOSFontsGo "0"
+        EndIf
+      EndIf
+      If "$GFOSFontsGo" EQ "0"
+        Echo "{FACE}: could not copy the old files to Old/{FACE}, so FONTS: was not changed."
+        Set GFOSFontsFailed "1"
+      EndIf
+    EndIf
+  EndIf
+  If "$GFOSFontsGo" EQ "1"
+    If NOT EXISTS FONTS:{FACE}
+      MakeDir FONTS:{FACE}
+    EndIf
+    Copy Fonts/{FACE} FONTS:{FACE} ALL CLONE QUIET
+    If WARN
+      Echo "{FACE}: could not copy its sizes to FONTS:{FACE}."
+      Set GFOSFontsFailed "1"
+    Else
+      Copy Fonts/{FACE}.font FONTS: CLONE QUIET
+      If WARN
+        Echo "{FACE}: could not copy FONTS:{FACE}.font."
+        Set GFOSFontsFailed "1"
+      Else
+        Echo "{FACE}: installed, 11, 13 and 16."
+      EndIf
+    EndIf
+  EndIf
+EndIf
