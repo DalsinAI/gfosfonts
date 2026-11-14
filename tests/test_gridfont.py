@@ -5,6 +5,10 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "tools"))
 import gridfont
 
 fails = oks = 0
+def br(rows):
+    """rows as written: a glyph inked in its last column gets a blank one (gridfont.blank_right)"""
+    return gridfont.blank_right({0: [len(rows[0]), 0, rows]})[0][2]
+
 def check(c, what):
     global fails, oks
     if c: oks += 1
@@ -101,7 +105,7 @@ h11 = gridfont.read_hand("src/gfos-sans-11-hand.txt")
 check(s11 == 11 and a11 == 9 and sorted(g11) == list(range(0x20, 0x7F)) + list(range(0xA0, 0x100)),
       "11 px, ascent 9, ISO-Latin-1 like 13 px ($20-$7E, $A0-$FF)")
 m11 = gridfont.compose({c: g11[c][2] for c in range(0x20, 0x7F)}, 11)
-check(all(g11[c][2] == m11[c] for c in m11) and len(m11) == 53, "11 px: the 53 accented letters made from its own letters")
+check(all(g11[c][2] == br(m11[c]) for c in m11) and len(m11) == 53, "11 px: the 53 accented letters made from its own letters")
 check(all("#" not in "".join(g11[ord(c)][2][3:4]) and "#" in "".join(g11[ord(c)][2][1:3]) for c in "àáâãäèéêëìíîïñòóôõöùúûüý"),
       "11 px small marks in rows 1-2, row 3 clear")
 check(g11[0xC9][2][2] == "." * g11[0xC9][0] and "#" in g11[0xC9][2][3], "11 px É: the E lowered to rows 3-8 under its mark")
@@ -157,7 +161,7 @@ for ch in "gjpqy":
     check("#" in "".join(g16[ord(ch)][2][13:]), f"16 px {ch}: under the baseline")
 check(all(g16[ord(c)][0] >= g[ord(c)][0] for c in "abcdefghijklmnopqrstuvwxyz"), "16 px letters no narrower than 13 px")
 m16 = gridfont.compose({c: g16[c][2] for c in range(0x20, 0x7F)}, 16)
-check(all(g16[c][2] == m16[c] for c in m16) and len(m16) == 53, "16 px: the 53 accented letters made from its own letters")
+check(all(g16[c][2] == br(m16[c]) for c in m16) and len(m16) == 53, "16 px: the 53 accented letters made from its own letters")
 check(all("#" not in g16[ord(c)][2][4] and "#" in "".join(g16[ord(c)][2][2:4]) for c in "àáâãäèéêëìíîïñòóôõöùúûüý"),
       "16 px small marks in rows 2-3, row 4 clear")
 for ch in "<>Kz§©«®»¼½¾×æ÷ø24":
@@ -248,6 +252,26 @@ with tempfile.TemporaryDirectory() as d:
     p = os.path.join(d, "s.png")
     gridfont.specimen(p, [("A", "src/dejavu-sans-13-today.txt"), ("B", "src/gfos-sans-13.txt")])
     check(os.path.getsize(p) > 1000, "a specimen PNG is written")
+
+# One blank column at the right of every glyph's advance, in every face (Ivanova, 14 Nov 2026): OS 3.2's
+# listbrowser loses a right-justified cell's last column, so a B inked there reads as E ("MB" -> "ME")
+for fam in ("sans", "sans-bold", "mono"):
+    for sz in (11, 13, 16):
+        path = f"src/gfos-{fam}-{sz}.txt"
+        gx = gridfont.read(path)[0]
+        inked = [chr(c) for c, (w, o, rows) in gx.items() if any(r[o + w - 1] == "#" for r in rows if len(r) >= o + w)]
+        check(not inked, f"{path}: every glyph's last advance column blank (space >= kern + ink + 1){' ' + ''.join(inked) if inked else ''}")
+check(gridfont.blank_right({66: [3, 0, ["##.", "###"]]})[66] == [4, 0, ["##..", "###."]], "blank_right: a B inked to the edge gets one more column")
+check(gridfont.blank_right({66: [3, 0, ["##.", "##."]]})[66] == [3, 0, ["##.", "##."]], "blank_right: a blank last column stays as it is")
+# with an origin line the rows start o columns before the origin: the advance's last column is row index o + w - 1
+check(gridfont.blank_right({106: [2, 1, ["..#", "###"]]})[106] == [3, 1, ["..#.", "###."]],
+      "blank_right: a glyph with an origin is padded on its advance's last column (o + w - 1)")
+check(gridfont.blank_right({106: [2, 1, ["#..", "##."]]})[106] == [2, 1, ["#..", "##."]],
+      "blank_right: with an origin, ink left of the advance's last column needs no pad")
+# Londo's review of #10: the 16 px r keeps the arm grow gave it before the blank column (drawn in the hand file)
+r16, rb16 = gridfont.read("src/gfos-sans-16.txt")[0][0x72], gridfont.read("src/gfos-sans-bold-16.txt")[0][0x72]
+check(r16[0] == 6 and r16[2][5] == ".#.##.", f"16 px r: width 6, arm .#.##. (got {r16[0]}, {r16[2][5]})")
+check(rb16[0] == 7 and rb16[2][5] == ".#####.", f"Bold 16 px r: width 7, arm .#####. (got {rb16[0]}, {rb16[2][5]})")
 
 print(f"test_gridfont: {oks + fails} checks, {fails} failed")
 sys.exit(1 if fails else 0)
