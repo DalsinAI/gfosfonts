@@ -5,6 +5,7 @@
   gridfont.py shrink FONT13.txt HAND11.txt NAME > OUT.txt  the 11 px cut: ASCII from the 13 px face, rows dropped,
                                                         with the 11 px hand file over it
   gridfont.py grow FONT13.txt HAND16.txt NAME > OUT.txt    the 16 px cut the same way, rows and a column added
+  gridfont.py bold FONT13.txt HANDB.txt NAME > OUT.txt    GFOS Sans Bold: the 13 px face with 2 px stems
   gridfont.py check FONT.txt                            the rules: rows, widths, 1 px stems in the hand set
   gridfont.py specimen OUT.png LABEL1=A.txt LABEL2=B.txt  Dale's specimen sheet, the faces one under the other
 
@@ -290,6 +291,61 @@ def grow(base, handp, name):
     return derive(base, handp, name, 16, 13, grow_rows,
                   "# the rest made from GFOS Sans 13 px by gridfont.py grow (rows and a column added beside like ones).\n")
 
+# ---- GFOS Sans Bold 13 px (14 Nov 2026) ----
+# Bold doubles every stem: each glyph is set again one pixel to the right (the way graphics.library's BoldSmear
+# draws a bold style, but drawn once into the font, so text in it is the same width everywhere), one column wider.
+# Where that fills a counter (the inside of a, e, o and such), the glyph is drawn in the Bold hand file instead,
+# and the accented letters are made from the bold letters with the regular marks, which stay open.
+def smear(rows):
+    """each row ORed with itself one pixel to the right, one column wider"""
+    out = []
+    for r in rows:
+        r = r + "."
+        out.append("".join("#" if r[x] == "#" or (x and r[x - 1] == "#") else "." for x in range(len(r))))
+    return out
+
+def counters(rows):
+    """the number of clear areas that don't reach the glyph's edge (the insides of o, e, a, B, 8...)"""
+    h, w = len(rows), len(rows[0])
+    seen, n = set(), 0
+    for sy in range(h):
+        for sx in range(w):
+            if rows[sy][sx] != "." or (sx, sy) in seen: continue
+            todo, edge = [(sx, sy)], False
+            seen.add((sx, sy))
+            while todo:
+                x, y = todo.pop()
+                if x in (0, w - 1) or y in (0, h - 1): edge = True
+                for nx, ny in ((x + 1, y), (x - 1, y), (x, y + 1), (x, y - 1)):
+                    if 0 <= nx < w and 0 <= ny < h and rows[ny][nx] == "." and (nx, ny) not in seen:
+                        seen.add((nx, ny))
+                        todo.append((nx, ny))
+            if not edge: n += 1
+    return n
+
+def bold(base, handp, name):
+    """GFOS Sans Bold 13 px: the Bold hand file first, the accented letters made from the bold letters, the rest
+    the regular face smeared; a smeared glyph that loses a counter has to be in the hand file"""
+    g13, size, ascent = read(base)
+    hand = read_hand(handp)
+    glyphs = {}
+    made_from = set(LATIN1) | set(CEDILLA)
+    for cp in sorted(g13):
+        if cp in made_from: continue
+        rows = hand.get(cp)
+        if rows is None:
+            rows = smear(g13[cp][2])
+            if counters(rows) < counters(g13[cp][2]):
+                raise SystemExit(f"{chr(cp)!r}: smearing fills a counter; draw it in {handp}")
+        if len(rows) != size:
+            raise SystemExit(f"{chr(cp)!r}: {len(rows)} rows, not {size}")
+        glyphs[cp] = [len(rows[0]), 0, rows]
+    for cp, rows in compose({cp: g[2] for cp, g in glyphs.items()}, 13).items():
+        glyphs[cp] = [len(rows[0]), 0, rows]
+    write(glyphs, size, ascent, name, set(hand), sys.stdout,
+          "# the rest GFOS Sans Regular 13 px set again a pixel to the right (gridfont.py bold).\n")
+    return glyphs
+
 def stems(rows):
     """runs of 2+ set pixels across that stay 2+ wide for 3+ rows down: a 2 px stem"""
     bad = []
@@ -388,6 +444,7 @@ if __name__ == "__main__":
     if a and a[0] == "merge" and len(a) == 4: merge(a[1], a[2], a[3])
     elif a and a[0] == "shrink" and len(a) == 4: shrink(a[1], a[2], a[3])
     elif a and a[0] == "grow" and len(a) == 4: grow(a[1], a[2], a[3])
+    elif a and a[0] == "bold" and len(a) == 4: bold(a[1], a[2], a[3])
     elif a and a[0] == "check" and len(a) in (2, 3): sys.exit(1 if check(*a[1:]) else 0)
     elif a and a[0] == "specimen" and len(a) >= 3: specimen(a[1], [x.split("=", 1) for x in a[2:]])
     else: sys.exit(__doc__)

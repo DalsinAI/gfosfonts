@@ -20,6 +20,8 @@ Status: Dale approved the direction from the second sheet (14 Nov 04:36: "yes, g
 | `src/gfos-sans-11.txt` | GFOS Sans Regular 11 px, ISO-Latin-1: the 11 px hand set, the accented letters made from its own letters (`compose`), the rest made from the 13 px face (`gridfont.py shrink`) |
 | `src/gfos-sans-16-hand.txt` | GFOS Sans 16 px: the characters drawn by hand at 16 px (18 that grow can't make, and the figures 2 and 4) |
 | `src/gfos-sans-16.txt` | GFOS Sans Regular 16 px, ISO-Latin-1: the 16 px hand set, the accented letters made from its own letters, the rest made from the 13 px face (`gridfont.py grow`) |
+| `src/gfos-sans-bold-13-hand.txt` | GFOS Sans Bold 13 px: the characters drawn by hand (where doubling the stems fills a counter, and " ¨) |
+| `src/gfos-sans-bold-13.txt` | GFOS Sans Bold 13 px, ISO-Latin-1: Regular 13 set again a pixel to the right (`gridfont.py bold`), the accented letters made from the bold letters |
 | `specimens/gfos-sans-13-vs-dejavu.png`, `specimens/gfos-sans-13-latin1-20261114.png` | the specimen sheets: both faces, actual size and at 4x |
 | `tools/dump_grid.c` | dumps a TrueType face as GFOS draws it, as editable grids |
 | `tools/gridfont.py` | reads, checks, merges and draws the grids |
@@ -72,6 +74,16 @@ inner column. What it can't make is drawn in `src/gfos-sans-16-hand.txt`.
 
 ![GFOS Sans 16 px over 13 px](specimens/gfos-sans-16-vs-13-20261114.png)
 
+## GFOS Sans Bold 13 px
+2 px stems: every glyph of Regular 13 set again one pixel to the right and one column wider, the way
+graphics.library's BoldSmear draws a bold style, but drawn into the font once, so a bold label is the same width
+everywhere and the counters can be kept open by hand. `gridfont.py bold` refuses a smeared glyph that loses a
+counter (the inside of a, e, o, B, 8...): those are in `src/gfos-sans-bold-13-hand.txt`. The accented letters
+are made from the bold letters with the regular marks, which stay open. The Amiga font is its own family,
+`GFOSSansBold.font`, so a program that asks for it gets the drawn bold rather than a smeared regular.
+
+![GFOS Sans Bold 13 px over Regular](specimens/gfos-sans-bold-13-20261114.png)
+
 ## Rules for the hand-drawn set (from the decision)
 - Stems 1 px at the small sizes, the same in every letter.
 - Round shoulders on n, m, h, a and d: a one-pixel diagonal step, never a 2x2 blob.
@@ -82,7 +94,7 @@ inner column. What it can't make is drawn in `src/gfos-sans-16-hand.txt`.
 has problems in the same characters (233 in the first 63 alone); GFOS Sans has none in its hand-drawn and composed characters.
 
 ## Tests
-`tests/run.sh` (368 + 25 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
+`tests/run.sh` (391 + 26 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
 and checks that today's render is unchanged.
 
 ## Next (Dale, 14 Nov 04:36: finish Latin-1, then the other sizes, Bold and Mono)
