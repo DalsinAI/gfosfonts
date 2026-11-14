@@ -3,7 +3,7 @@
 GFOS's default fonts, drawn by hand pixel by pixel (Dale, 13 Nov 2026: "we should hand draw our
 default fonts", "correcting these"). Decision: amicradle-teams `teams/DECISION-HANDDRAWN-FONTS-20261113-1954.md`.
 
-Status: **first specimen sheet only, for Dale to judge.** Nothing here is a default yet.
+Status: **specimen sheet only, for Dale to judge** (second cut, 14 Nov: the ASCII punctuation added). Nothing here is a default yet.
 
 ![GFOS Sans 13 px against today's DejaVu Sans](specimens/gfos-sans-13-vs-dejavu.png)
 
@@ -11,7 +11,7 @@ Status: **first specimen sheet only, for Dale to judge.** Nothing here is a defa
 | File | What |
 | --- | --- |
 | `src/dejavu-sans-13-today.txt` | DejaVu Sans at 13 px exactly as GFOS draws it today (the `_ttf` font OpenBench uses), dumped by `tools/dump_grid` |
-| `src/gfos-sans-13-hand.txt` | the characters corrected by hand so far: a-z, A-Z, 0-9 and `.` |
+| `src/gfos-sans-13-hand.txt` | the characters corrected by hand so far: a-z, A-Z, 0-9 and all the ASCII punctuation |
 | `src/gfos-sans-13.txt` | GFOS Sans Regular 13 px: the hand set over today's render (`gridfont.py merge`) |
 | `specimens/gfos-sans-13-vs-dejavu.png` | the specimen sheet: both faces, actual size and at 4x |
 | `tools/dump_grid.c` | dumps a TrueType face as GFOS draws it, as editable grids |
@@ -33,7 +33,8 @@ width 7
 
 A glyph that starts left of its origin has an `origin N` line (N columns before the origin).
 Lines starting `# ` are comments. The hand file is simpler: the character on its own line,
-then its 13 rows; its width is the rows' length.
+then its 13 rows; its width is the rows' length. `#`, which would read as a comment, is named
+`char U+0023` instead.
 
 ## Today's render, reproduced
 `dump_grid FONT.ttf 13` follows GFOS's own path (gfopenfont `library/textfont`): diskfont at 72 x 72 dpi
@@ -49,14 +50,14 @@ the same size as FONTS:_ttf/DejaVuSans.ttf on Instance-32).
 - x-height 7 px (rows 3-9); capitals and figures 9 px (rows 1-9); figures all 7 wide.
 
 `gridfont.py check` finds 2 px stems and 2x2 blobs in the hand set. Today's DejaVu render
-has 233 of them in the same 63 characters; GFOS Sans has none.
+has problems in the same characters (233 in the first 63 alone); GFOS Sans has none in its 94.
 
 ## Tests
-`tests/run.sh` (61 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
+`tests/run.sh` (71 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
 and checks that today's render is unchanged.
 
 ## Next (after Dale's verdict on this sheet)
-The rest of ISO-Latin-1 ($80-$9F left empty), Bold, 11 and 16 px, GFOS Mono 8x16 and 10x20,
+The rest of ISO-Latin-1 ($A0-$FF; $80-$9F left empty), Bold, 11 and 16 px, GFOS Mono 8x16 and 10x20,
 hires (1:2) cuts, then the build to Amiga diskfont `.font` files.
 
 ## Licences

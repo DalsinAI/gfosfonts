@@ -40,7 +40,7 @@ def read(path):
     return glyphs, size, ascent
 
 def read_hand(path):
-    """the hand file: a character on its own line, then its rows; width = the row length"""
+    """the hand file: a character on its own line (or 'char U+XXXX'), then its rows; width = the row length"""
     glyphs, cur = {}, None
     for line in open(path, encoding="utf-8"):
         line = line.rstrip("\n")
@@ -51,6 +51,10 @@ def read_hand(path):
             continue
         if not line:
             cur = None
+            continue
+        if cur is None and line.startswith("char U+"):   # a character a name line can't hold, e.g. '#'
+            cur = int(line[7:].split()[0], 16)
+            glyphs[cur] = []
             continue
         if cur is None and not (set(line) <= set(".#") and len(line) > 1 or line == "."):
             cur = ord(line)
@@ -141,7 +145,9 @@ def draw(glyphs, text, missing=63):
 def specimen(out, faces):
     from PIL import Image
     lines = ["abcdefghijklmnopqrstuvwxyz", "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "0123456789",
-             "This is an Amiga with a 68040 and an FPU."]
+             "!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
+             "This is an Amiga with a 68040 and an FPU.",
+             "RAM Disk: 1,024 KB free (98%) - Work:Games/[OK] {x+y=z} #1 ~ok? @3.2"]
     loaded = [(label, read(p)[0]) for label, p in faces]
     label_font = loaded[-1][1]
     Z, M, GAP = 4, 16, 10                               # zoom, margin, gap
