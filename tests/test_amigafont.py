@@ -67,6 +67,16 @@ with tempfile.TemporaryDirectory() as d:
 gbold = gridfont.read("src/gfos-sans-bold-13.txt")[0]
 check(fb["name"] == "GFOSSansBold.font" and all(amigafont.glyph_rows(fb, c) == gbold[c][2] for c in gbold),
       "GFOSSansBold/13: named GFOSSansBold.font, every glyph reads back")
+with tempfile.TemporaryDirectory() as d:
+    amigafont.build("src/gfos-mono-13.txt", "GFOSMono", d)
+    fm = amigafont.read(open(os.path.join(d, "GFOSMono", "13"), "rb").read())
+    fcm = open(os.path.join(d, "GFOSMono.font"), "rb").read()
+gmono = gridfont.read("src/gfos-mono-13.txt")[0]
+check(fm["flags"] == amigafont.FPF_DISKFONT | amigafont.FPF_DESIGNED and fm["xsize"] == 8,
+      "GFOSMono/13: not proportional, tf_XSize 8")
+check(struct.unpack_from(">HBB", fcm, 4 + 256)[2] == fm["flags"], "GFOSMono.font's entry: the same flags")
+check(set(fm["space"]) == {8} and all(amigafont.glyph_rows(fm, c) == gmono[c][2] for c in gmono),
+      "GFOSMono: every character, the default box too, 8 wide; every glyph reads back")
 try:
     with tempfile.TemporaryDirectory() as d:
         amigafont.build("src/gfos-sans-13.txt", "GFOSSans", d, "src/gfos-sans-13.txt")

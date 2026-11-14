@@ -6,6 +6,7 @@
                                                         with the 11 px hand file over it
   gridfont.py grow FONT13.txt HAND16.txt NAME > OUT.txt    the 16 px cut the same way, rows and a column added
   gridfont.py bold FONT13.txt HANDB.txt NAME > OUT.txt    GFOS Sans Bold: the 13 px face with 2 px stems
+  gridfont.py mono FONT13.txt HANDM.txt NAME > OUT.txt    GFOS Mono: every character 8 wide
   gridfont.py check FONT.txt                            the rules: rows, widths, 1 px stems in the hand set
   gridfont.py specimen OUT.png LABEL1=A.txt LABEL2=B.txt  Dale's specimen sheet, the faces one under the other
 
@@ -346,6 +347,41 @@ def bold(base, handp, name):
           "# the rest GFOS Sans Regular 13 px set again a pixel to the right (gridfont.py bold).\n")
     return glyphs
 
+# ---- GFOS Mono 13 px (14 Nov 2026) ----
+# Every character 8 wide, for the shell, code and anywhere columns must line up. A GFOS Sans Regular 13 glyph whose
+# ink is 7 columns or fewer is centred in columns 0-6, so column 7 is always the clear gap between characters; the
+# wider ones are drawn in the Mono hand file, and the accented letters are made from the mono letters.
+MONO_W = 8
+
+def fit(rows, width=MONO_W):
+    """rows' ink centred in columns 0 to width - 2; None when it is wider than that"""
+    cols = [x for x in range(len(rows[0])) if any(r[x] == "#" for r in rows)]
+    if not cols: return ["." * width for _ in rows]
+    lo, hi = min(cols), max(cols)
+    if hi - lo + 1 > width - 1: return None
+    x0 = (width - 1 - (hi - lo + 1)) // 2
+    return ["." * x0 + r[lo:hi + 1] + "." * (width - x0 - (hi - lo + 1)) for r in rows]
+
+def mono(base, handp, name):
+    """GFOS Mono 13 px"""
+    g13, size, ascent = read(base)
+    hand = read_hand(handp)
+    glyphs = {}
+    made_from = set(LATIN1) | set(CEDILLA)
+    for cp in sorted(g13):
+        if cp in made_from: continue
+        rows = hand.get(cp) or fit(g13[cp][2])
+        if rows is None:
+            raise SystemExit(f"{chr(cp)!r}: too wide for {MONO_W} columns; draw it in {handp}")
+        if len(rows) != size or len(rows[0]) != MONO_W:
+            raise SystemExit(f"{chr(cp)!r}: not {size} rows of {MONO_W}")
+        glyphs[cp] = [MONO_W, 0, rows]
+    for cp, rows in compose({cp: g[2] for cp, g in glyphs.items()}, 13).items():
+        glyphs[cp] = [MONO_W, 0, rows]
+    write(glyphs, size, ascent, name, set(hand), sys.stdout,
+          "# the rest GFOS Sans Regular 13 px centred in 8 columns (gridfont.py mono).\n")
+    return glyphs
+
 def stems(rows):
     """runs of 2+ set pixels across that stay 2+ wide for 3+ rows down: a 2 px stem"""
     bad = []
@@ -445,6 +481,7 @@ if __name__ == "__main__":
     elif a and a[0] == "shrink" and len(a) == 4: shrink(a[1], a[2], a[3])
     elif a and a[0] == "grow" and len(a) == 4: grow(a[1], a[2], a[3])
     elif a and a[0] == "bold" and len(a) == 4: bold(a[1], a[2], a[3])
+    elif a and a[0] == "mono" and len(a) == 4: mono(a[1], a[2], a[3])
     elif a and a[0] == "check" and len(a) in (2, 3): sys.exit(1 if check(*a[1:]) else 0)
     elif a and a[0] == "specimen" and len(a) >= 3: specimen(a[1], [x.split("=", 1) for x in a[2:]])
     else: sys.exit(__doc__)
