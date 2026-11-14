@@ -55,6 +55,12 @@ check(size == 13 and ascent == 10 and len(g) == 191, "13 px, ascent 10, ISO-Lati
 check(not any(0x7F <= c <= 0x9F for c in g), "$7F-$9F left empty")
 check(gridfont.check("src/gfos-sans-13.txt", "src/gfos-sans-13-hand.txt") == 0, "gridfont check passes")
 
+# Latin-1's letters with no plain letter under them, by hand (Lisette, 14 Nov)
+check(set("ßæÆøØðÐþÞµ") <= {chr(c) for c in hand}, "ß æ Æ ø Ø ð Ð þ Þ µ are drawn by hand")
+check(all("#" in "".join(hand[ord(c)][1:10]) and "#" not in "".join(hand[ord(c)][10:]) for c in "ÆØÐÞ"),
+      "Æ Ø Ð Þ stand on the baseline, capitals' height")
+check(all("#" in "".join(hand[ord(c)][10:]) for c in "þµ"), "þ and µ go under the baseline")
+
 # Latin-1's accented letters, made from the hand set (Lisette, 14 Nov)
 made = gridfont.compose(hand)
 check(set(made) == set(gridfont.LATIN1) | set(gridfont.CEDILLA) and len(made) == 53, "53 accented letters made")
