@@ -52,6 +52,15 @@ check(f11["size"] == 11 and f11["baseline"] == 8, "11 px, baseline row 8")
 check(all(amigafont.glyph_rows(f11, c) == g11[c][2] for c in g11), "every 11 px glyph reads back as its grid")
 check(all(amigafont.glyph_rows(f11, c) == amigafont.glyph_rows(f11, 0x100) for c in range(0x7F, 0xA0))
       and amigafont.glyph_rows(f11, 0xE9) == g11[0xE9][2], "11 px: $7F-$9F the default glyph, Latin-1 drawn")
+with tempfile.TemporaryDirectory() as d:
+    amigafont.build("src/gfos-sans-13.txt", "GFOSSans", d, "src/gfos-sans-11.txt", "src/gfos-sans-16.txt")
+    f16 = amigafont.read(open(os.path.join(d, "GFOSSans", "16"), "rb").read())
+    fc3 = open(os.path.join(d, "GFOSSans.font"), "rb").read()
+g16 = gridfont.read("src/gfos-sans-16.txt")[0]
+check(struct.unpack_from(">H", fc3, 2)[0] == 3 and [struct.unpack_from(">H", fc3, 4 + 260 * i + 256)[0] for i in range(3)]
+      == [11, 13, 16], "three sizes: 11, 13, 16")
+check(f16["size"] == 16 and f16["baseline"] == 12 and all(amigafont.glyph_rows(f16, c) == g16[c][2] for c in g16),
+      "16 px, baseline row 12, every glyph reads back")
 try:
     with tempfile.TemporaryDirectory() as d:
         amigafont.build("src/gfos-sans-13.txt", "GFOSSans", d, "src/gfos-sans-13.txt")

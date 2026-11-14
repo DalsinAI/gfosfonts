@@ -18,10 +18,12 @@ Status: Dale approved the direction from the second sheet (14 Nov 04:36: "yes, g
 | `src/gfos-sans-13.txt` | GFOS Sans Regular 13 px: the hand set, and Latin-1's accented letters made from it (`compose`), over today's render (`gridfont.py merge`) |
 | `src/gfos-sans-11-hand.txt` | GFOS Sans 11 px: the characters drawn by hand at 11 px (a e k z K S X Z, the figures 2 4 9, $ % & @ < >, and 21 Latin-1 symbols and letters with no plain base) |
 | `src/gfos-sans-11.txt` | GFOS Sans Regular 11 px, ISO-Latin-1: the 11 px hand set, the accented letters made from its own letters (`compose`), the rest made from the 13 px face (`gridfont.py shrink`) |
+| `src/gfos-sans-16-hand.txt` | GFOS Sans 16 px: the characters drawn by hand at 16 px (18 that grow can't make, and the figures 2 and 4) |
+| `src/gfos-sans-16.txt` | GFOS Sans Regular 16 px, ISO-Latin-1: the 16 px hand set, the accented letters made from its own letters, the rest made from the 13 px face (`gridfont.py grow`) |
 | `specimens/gfos-sans-13-vs-dejavu.png`, `specimens/gfos-sans-13-latin1-20261114.png` | the specimen sheets: both faces, actual size and at 4x |
 | `tools/dump_grid.c` | dumps a TrueType face as GFOS draws it, as editable grids |
 | `tools/gridfont.py` | reads, checks, merges and draws the grids |
-| `tools/amigafont.py` | builds the Amiga bitmap font from a grid: `amigafont.py build src/gfos-sans-13.txt GFOSSans OUT src/gfos-sans-11.txt` writes `OUT/GFOSSans.font` (both sizes), `OUT/GFOSSans/11` and `OUT/GFOSSans/13` for FONTS: (build outputs stay out of git) |
+| `tools/amigafont.py` | builds the Amiga bitmap font from a grid: `amigafont.py build src/gfos-sans-13.txt GFOSSans OUT src/gfos-sans-11.txt src/gfos-sans-16.txt` writes `OUT/GFOSSans.font` (every size) and `OUT/GFOSSans/11`, `13`, `16` for FONTS: (build outputs stay out of git) |
 
 ## The grid format
 Plain text, one file per face and size, so every change is a readable diff:
@@ -60,6 +62,16 @@ same way as at 13 px: a small letter's mark in rows 1-2, a capital lowered to ro
 
 ![GFOS Sans 11 px over 13 px](specimens/gfos-sans-11-vs-13-20261114.png)
 
+## GFOS Sans 16 px
+For larger screens and anyone who picks it; 1080p and up stay 13 px (Dale, 14 Nov 02:43). 16 rows, ascent 13:
+row 0 clear for marks, ascenders rows 1-12, capitals and figures rows 2-12 (11 px), x-height rows 5-12 (8 px),
+descenders rows 13-15, figures all 8 wide. `gridfont.py grow` makes it from the 13 px face the other way round
+from shrink: a row is only added beside a like row, nearest the middle, so stems stay 1 px (capitals gain two
+rows, the x-height one, an ascender one above the x-height and one in it), and a glyph 6 or more wide gains a like
+inner column. What it can't make is drawn in `src/gfos-sans-16-hand.txt`.
+
+![GFOS Sans 16 px over 13 px](specimens/gfos-sans-16-vs-13-20261114.png)
+
 ## Rules for the hand-drawn set (from the decision)
 - Stems 1 px at the small sizes, the same in every letter.
 - Round shoulders on n, m, h, a and d: a one-pixel diagonal step, never a 2x2 blob.
@@ -70,7 +82,7 @@ same way as at 13 px: a small letter's mark in rows 1-2, a capital lowered to ro
 has problems in the same characters (233 in the first 63 alone); GFOS Sans has none in its hand-drawn and composed characters.
 
 ## Tests
-`tests/run.sh` (284 + 23 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
+`tests/run.sh` (368 + 25 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
 and checks that today's render is unchanged.
 
 ## Next (Dale, 14 Nov 04:36: finish Latin-1, then the other sizes, Bold and Mono)

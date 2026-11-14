@@ -4,6 +4,7 @@
   gridfont.py merge BASE.txt HAND.txt NAME > OUT.txt   base (dump_grid's) with the hand-drawn glyphs over it
   gridfont.py shrink FONT13.txt HAND11.txt NAME > OUT.txt  the 11 px cut: ASCII from the 13 px face, rows dropped,
                                                         with the 11 px hand file over it
+  gridfont.py grow FONT13.txt HAND16.txt NAME > OUT.txt    the 16 px cut the same way, rows and a column added
   gridfont.py check FONT.txt                            the rules: rows, widths, 1 px stems in the hand set
   gridfont.py specimen OUT.png LABEL1=A.txt LABEL2=B.txt  Dale's specimen sheet, the faces one under the other
 
@@ -120,8 +121,10 @@ def put(rows, mark, y0, centre):
 
 # Where the marks go at each size: the capitals' top row and the x-height's, the baseline row (the first row under
 # it), and the row a small letter's mark starts on. 13 px: capitals rows 1-9, x-height rows 3-9; 11 px: capitals
-# rows 2-8, x-height rows 4-8, a small letter's mark rows 1-2 (row 3 clear).
-GEOM = {13: dict(cap=1, xh=3, base=10, small=0), 11: dict(cap=2, xh=4, base=9, small=1)}
+# rows 2-8, x-height rows 4-8, a small letter's mark rows 1-2 (row 3 clear); 16 px: capitals rows 2-12, x-height
+# rows 5-12, a small letter's mark rows 2-3 (row 4 clear).
+GEOM = {13: dict(cap=1, xh=3, base=10, small=0), 11: dict(cap=2, xh=4, base=9, small=1),
+        16: dict(cap=2, xh=5, base=13, small=2)}
 
 def lower_cap(rows, cap=1, base=10):
     """the capital (rows cap to base - 1) moved down a row by dropping one of two like rows, nearest the middle
@@ -204,27 +207,88 @@ def shrink_rows(rows):
     de = drop_like(rows[10:13], 1) or rows[11:13]
     return narrow(["." * len(rows[0])] + rows[0:3] + xh + de)
 
-def shrink(base, handp, name, out=None):
-    """the 11 px face, ISO-Latin-1 like the 13 px one: the 11 px hand file first, then Latin-1's accented letters
-    made from the 11 px letters (compose), then the rest made from the 13 px face"""
-    g13, size, ascent = read(base)
+def shrink(base, handp, name):
+    """the 11 px face"""
+    return derive(base, handp, name, 11, 9, shrink_rows,
+                  "# the rest made from GFOS Sans 13 px by gridfont.py shrink (one of two like rows and columns dropped).\n")
+
+# ---- GFOS Sans 16 px from the 13 px face (14 Nov 2026) ----
+# 16 rows, ascent 13: row 0 clear for marks, ascenders rows 1-12, capitals and figures rows 2-12 (11 px), the
+# x-height rows 5-12 (8 px), descenders rows 13-15 (3 px, as at 13). Stems stay 1 px: a row is only ever added
+# beside a like row (a straight run of a stem or a bowl's sides), nearest the band's middle, so nothing new is
+# thickened. A capital's band (13 px rows 1-9) gains two rows; an ascender's part above the x-height one row and its
+# x-height one (or, with no like rows above, its whole band two); the x-height one. A glyph 6 or more wide gains a
+# like inner column. What can't grow that way is drawn in the 16 px hand file.
+def add_like(band, k):
+    """band with k rows added, each beside one of two like rows nearest the middle; None when there are none"""
+    band = list(band)
+    for _ in range(k):
+        mid = (len(band) - 1) / 2
+        for i in sorted(range(len(band) - 1), key=lambda i: (abs(i + 0.5 - mid), -i)):
+            if band[i] == band[i + 1]:
+                band.insert(i, band[i])
+                break
+        else:
+            return None
+    return band
+
+def widen(rows):
+    """6 columns or more gain a column beside one of two like inner columns; unchanged when none are alike"""
+    if len(rows[0]) < 6: return rows
+    cols = ["".join(r[x] for r in rows) for x in range(len(rows[0]))]
+    inner = add_like(cols[1:-1], 1)
+    if inner is None: return rows
+    cols = [cols[0]] + inner + [cols[-1]]
+    return ["".join(c[y] for c in cols) for y in range(len(rows))]
+
+def grow_rows(rows):
+    """a 13-row glyph as 16 rows and a column wider; None when a band has no like rows to grow by"""
+    blank = "." * len(rows[0])
+    ink = [y for y in range(10) if "#" in rows[y]]
+    top = min(ink) if ink else 10
+    if top >= 3:                                        # x-height and under
+        x = add_like(rows[3:10], 1)
+        if x is None: return None
+        body = [blank] * 5 + x
+    elif top == 1:                                      # a capital, a figure
+        b = add_like(rows[1:10], 2)
+        if b is None: return None
+        body = [blank] * 2 + b
+    else:                                               # an ascender
+        a, x = add_like(rows[0:3], 1), add_like(rows[3:10], 1)
+        if a is None or x is None:
+            b = add_like(rows[0:10], 2)
+            if b is None: return None
+            body = [blank] + b
+        else:
+            body = [blank] + a + x
+    return widen(body + rows[10:13])
+
+def derive(base, handp, name, size, ascent, make, note):
+    """a face from the 13 px one: the hand file first, Latin-1's accented letters made from the new letters, the
+    rest made by make (shrink_rows or grow_rows)"""
+    g13 = read(base)[0]
     hand = read_hand(handp)
     glyphs = {}
     def one(cp, made):
-        rows = hand.get(cp) or made.get(cp) or (shrink_rows(g13[cp][2]) if cp in g13 else None)
+        rows = hand.get(cp) or made.get(cp) or (make(g13[cp][2]) if cp in g13 else None)
         if rows is None:
             raise SystemExit(f"{chr(cp)!r}: can't be made from 13 px; draw it in {handp}")
-        if len(rows) != 11:
-            raise SystemExit(f"{chr(cp)!r}: {len(rows)} rows, not 11")
+        if len(rows) != size:
+            raise SystemExit(f"{chr(cp)!r}: {len(rows)} rows, not {size}")
         glyphs[cp] = [len(rows[0]), 0, rows]
     for cp in range(0x20, 0x7F):
         one(cp, {})
-    made = compose({cp: g[2] for cp, g in glyphs.items()}, 11)
+    made = compose({cp: g[2] for cp, g in glyphs.items()}, size)
     for cp in range(0xA0, 0x100):
         one(cp, made)
-    write(glyphs, 11, 9, name, set(hand), out or sys.stdout,
-          "# the rest made from GFOS Sans 13 px by gridfont.py shrink (one of two like rows and columns dropped).\n")
+    write(glyphs, size, ascent, name, set(hand), sys.stdout, note)
     return glyphs
+
+def grow(base, handp, name):
+    """the 16 px face"""
+    return derive(base, handp, name, 16, 13, grow_rows,
+                  "# the rest made from GFOS Sans 13 px by gridfont.py grow (rows and a column added beside like ones).\n")
 
 def stems(rows):
     """runs of 2+ set pixels across that stay 2+ wide for 3+ rows down: a 2 px stem"""
@@ -323,6 +387,7 @@ if __name__ == "__main__":
     a = sys.argv[1:]
     if a and a[0] == "merge" and len(a) == 4: merge(a[1], a[2], a[3])
     elif a and a[0] == "shrink" and len(a) == 4: shrink(a[1], a[2], a[3])
+    elif a and a[0] == "grow" and len(a) == 4: grow(a[1], a[2], a[3])
     elif a and a[0] == "check" and len(a) in (2, 3): sys.exit(1 if check(*a[1:]) else 0)
     elif a and a[0] == "specimen" and len(a) >= 3: specimen(a[1], [x.split("=", 1) for x in a[2:]])
     else: sys.exit(__doc__)
