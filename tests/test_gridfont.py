@@ -127,6 +127,44 @@ for ch in "SKXZ2$%&@<>¢¤¥§©®ª«»¼½¾Æ×÷Øßæøþ¸":
     check(ord(ch) in h11, f"11 px {ch!r} drawn by hand")
 check(h11[ord("«")] == [r[::-1] for r in h11[ord("»")]], "11 px « and » mirror each other")
 
+# GFOS Sans 16 px (Lisette, 14 Nov): made from 13 px by grow, the 16 px hand file over it
+check(gridfont.add_like(["a", "b", "b", "c"], 1) == ["a", "b", "b", "b", "c"], "add_like adds beside two like rows")
+check(gridfont.add_like(["a", "b", "c"], 1) is None, "add_like: None with no like rows")
+check(gridfont.widen([".#....#."] * 3) == [".#.....#."] * 3, "widen: a column beside two like ones")
+check(gridfont.widen(["#...#", ".#.#."]) == ["#...#", ".#.#."], "widen: under 6 columns unchanged")
+out = subprocess.run([sys.executable, "tools/gridfont.py", "grow", "src/gfos-sans-13.txt", "src/gfos-sans-16-hand.txt",
+                      "GFOS Sans Regular 16"], capture_output=True, text=True)
+check(out.returncode == 0 and out.stdout == open("src/gfos-sans-16.txt", encoding="utf-8").read(),
+      "src/gfos-sans-16.txt is the grow, as committed")
+out = subprocess.run([sys.executable, "tools/gridfont.py", "shrink", "src/gfos-sans-13.txt", "src/gfos-sans-11-hand.txt",
+                      "GFOS Sans Regular 11"], capture_output=True, text=True)
+check(out.stdout == open("src/gfos-sans-11.txt", encoding="utf-8").read(), "shrink unchanged by the shared derive")
+g16, s16, a16 = gridfont.read("src/gfos-sans-16.txt")
+h16 = gridfont.read_hand("src/gfos-sans-16-hand.txt")
+check(s16 == 16 and a16 == 13 and sorted(g16) == sorted(g11), "16 px, ascent 13, the same 191 characters")
+check(all(len(r) == 16 and len({len(x) for x in r}) == 1 for _, _, r in g16.values()), "16 rows, one width each")
+check(gridfont.check("src/gfos-sans-16.txt") == 0, "every 16 px glyph: 1 px stems, no blobs")
+check({g16[ord(c)][0] for c in "0123456789"} == {8}, "16 px figures all 8 wide")
+for ch in "acemnorsuvwxz":
+    r = g16[ord(ch)][2]
+    check("#" in r[5] and "#" in r[12] and not any("#" in x for x in r[:5] + r[13:]), f"16 px {ch}: x-height rows 5-12")
+for ch in "ABDEFHKLMNPRTUVWXYZ0123456789":
+    r = g16[ord(ch)][2]
+    check("#" in r[2] and "#" in r[12] and not any("#" in x for x in r[:2] + r[13:]), f"16 px {ch}: rows 2-12")
+for ch in "bdhkl":
+    check("#" in g16[ord(ch)][2][1] and "#" not in g16[ord(ch)][2][0], f"16 px {ch}: the ascender from row 1")
+for ch in "gjpqy":
+    check("#" in "".join(g16[ord(ch)][2][13:]), f"16 px {ch}: under the baseline")
+check(all(g16[ord(c)][0] >= g[ord(c)][0] for c in "abcdefghijklmnopqrstuvwxyz"), "16 px letters no narrower than 13 px")
+m16 = gridfont.compose({c: g16[c][2] for c in range(0x20, 0x7F)}, 16)
+check(all(g16[c][2] == m16[c] for c in m16) and len(m16) == 53, "16 px: the 53 accented letters made from its own letters")
+check(all("#" not in g16[ord(c)][2][4] and "#" in "".join(g16[ord(c)][2][2:4]) for c in "àáâãäèéêëìíîïñòóôõöùúûüý"),
+      "16 px small marks in rows 2-3, row 4 clear")
+for ch in "<>Kz§©«®»¼½¾×æ÷ø24":
+    check(ord(ch) in h16, f"16 px {ch!r} drawn by hand")
+check(h16[ord("<")] == [r[::-1] for r in h16[ord(">")]] and h16[ord("«")] == [r[::-1] for r in h16[ord("»")]],
+      "16 px < > and « » mirror each other")
+
 # the specimen draws
 with tempfile.TemporaryDirectory() as d:
     p = os.path.join(d, "s.png")
