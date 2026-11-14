@@ -37,5 +37,26 @@ check(all(0 <= x and x + w <= f["modulo"] * 8 for x, w in f["loc"]), "every loca
 check(len(fc) == 4 + 260 and struct.unpack_from(">HH", fc, 0) == (0x0F00, 1), "GFOSSans.font: one entry")
 check(fc[4:4 + 11] == b"GFOSSans/13" and fc[4 + 11] == 0, "its entry names GFOSSans/13")
 check(struct.unpack_from(">HBB", fc, 4 + 256) == (13, 0, f["flags"]), "its entry: 13, plain, the font's flags")
+# both sizes in one contents file (11 and 13)
+with tempfile.TemporaryDirectory() as d:
+    amigafont.build("src/gfos-sans-13.txt", "GFOSSans", d, "src/gfos-sans-11.txt")
+    f11 = amigafont.read(open(os.path.join(d, "GFOSSans", "11"), "rb").read())
+    fc2 = open(os.path.join(d, "GFOSSans.font"), "rb").read()
+    check(os.path.exists(os.path.join(d, "GFOSSans", "13")), "the 13 px file is written too")
+check(struct.unpack_from(">HH", fc2, 0) == (0x0F00, 2) and len(fc2) == 4 + 2 * 260, "GFOSSans.font: two entries")
+check(fc2[4:15] == b"GFOSSans/11" and fc2[264:275] == b"GFOSSans/13", "the entries name 11 then 13")
+check(struct.unpack_from(">H", fc2, 4 + 256)[0] == 11 and struct.unpack_from(">H", fc2, 264 + 256)[0] == 13,
+      "the entries' sizes, smallest first")
+g11 = gridfont.read("src/gfos-sans-11.txt")[0]
+check(f11["size"] == 11 and f11["baseline"] == 8, "11 px, baseline row 8")
+check(all(amigafont.glyph_rows(f11, c) == g11[c][2] for c in g11), "every 11 px glyph reads back as its grid")
+check(all(amigafont.glyph_rows(f11, c) == amigafont.glyph_rows(f11, 0x100) for c in range(0xA0, 0x100)),
+      "11 px: Latin-1 not yet drawn, so it gets the default glyph")
+try:
+    with tempfile.TemporaryDirectory() as d:
+        amigafont.build("src/gfos-sans-13.txt", "GFOSSans", d, "src/gfos-sans-13.txt")
+    check(False, "two grids of one size refused")
+except SystemExit:
+    check(True, "two grids of one size refused")
 print(f"test_amigafont: {oks + fails} checks, {fails} failed")
 sys.exit(1 if fails else 0)

@@ -2,6 +2,8 @@
 """gridfont: GFOS's pixel-grid fonts (src/*.txt) read, checked, merged and drawn.
 
   gridfont.py merge BASE.txt HAND.txt NAME > OUT.txt   base (dump_grid's) with the hand-drawn glyphs over it
+  gridfont.py shrink FONT13.txt HAND11.txt NAME > OUT.txt  the 11 px cut: ASCII from the 13 px face, rows dropped,
+                                                        with the 11 px hand file over it
   gridfont.py check FONT.txt                            the rules: rows, widths, 1 px stems in the hand set
   gridfont.py specimen OUT.png LABEL1=A.txt LABEL2=B.txt  Dale's specimen sheet, the faces one under the other
 
@@ -67,9 +69,9 @@ def read_hand(path):
         glyphs[cur].append(line)
     return glyphs
 
-def write(glyphs, size, ascent, name, hand, out):
+def write(glyphs, size, ascent, name, hand, out, note=None):
     out.write(f"# {name}: GFOS's own pixel font. Hand-drawn characters marked 'hand';\n")
-    out.write("# the rest still DejaVu Sans as GFOS draws it today (tools/dump_grid), to be redrawn.\n")
+    out.write(note or "# the rest still DejaVu Sans as GFOS draws it today (tools/dump_grid), to be redrawn.\n")
     out.write("# DejaVu changes are public domain; the fonts' licence: LICENSE-FONTS.\n")
     out.write(f"size {size}\nascent {ascent}\n\n")
     for cp in sorted(glyphs):
@@ -155,6 +157,60 @@ def merge(base, handp, name):
             raise SystemExit(f"{chr(cp)!r}: {len(rows)} rows, not {size}")
         glyphs[cp] = [len(rows[0]), 0, rows]
     write(glyphs, size, ascent, name, set(hand) | set(made), sys.stdout)
+
+# ---- GFOS Sans 11 px from the 13 px face (14 Nov 2026) ----
+# 11 rows, ascent 9: row 0 kept clear for marks, ascenders rows 1-8, capitals and figures rows 2-8 (7 px), the
+# x-height rows 4-8 (5 px), descenders rows 9-10, and a column narrower to keep the 13 px proportions. Above the x-height nothing changes (13 px rows 0-2 become rows
+# 1-3); the x-height loses two rows and the descent one, each time one of two like rows (a straight run of a stem
+# or a bowl's sides), nearest the band's middle first, so the shape keeps its ends. A descent with no like rows
+# loses its first row. A glyph whose x-height band has no two like rows to lose can't be made this way and must be
+# in the 11 px hand file, which wins over everything made here.
+def drop_like(band, k):
+    """band less k rows, each one of two like rows nearest the middle; None when there aren't k to drop"""
+    band = list(band)
+    for _ in range(k):
+        mid = (len(band) - 1) / 2
+        for i in sorted(range(len(band) - 1), key=lambda i: abs(i + 0.5 - mid)):
+            if band[i] == band[i + 1]:
+                del band[i]
+                break
+        else:
+            return None
+    return band
+
+def narrow(rows):
+    """7 columns or more lose one of two like inner columns, nearest the middle; unchanged when none are alike
+    (a diagonal letter, A V W X Y, keeps its width)"""
+    if len(rows[0]) < 7: return rows
+    cols = ["".join(r[x] for r in rows) for x in range(len(rows[0]))]
+    inner = drop_like(cols[1:-1], 1)
+    if inner is None: return rows
+    cols = [cols[0]] + inner + [cols[-1]]
+    return ["".join(c[y] for c in cols) for y in range(len(rows))]
+
+def shrink_rows(rows):
+    """a 13-row glyph as 11 rows, a column narrower where it can be; None when the x-height band can't lose two
+    like rows"""
+    xh = drop_like(rows[3:10], 2)
+    if xh is None: return None
+    de = drop_like(rows[10:13], 1) or rows[11:13]
+    return narrow(["." * len(rows[0])] + rows[0:3] + xh + de)
+
+def shrink(base, handp, name, out=None):
+    """the 11 px face: $20-$7E made from the 13 px face, the 11 px hand file over it"""
+    g13, size, ascent = read(base)
+    hand = read_hand(handp)
+    glyphs = {}
+    for cp in range(0x20, 0x7F):
+        rows = hand.get(cp) or (shrink_rows(g13[cp][2]) if cp in g13 else None)
+        if rows is None:
+            raise SystemExit(f"{chr(cp)!r}: can't be made from 13 px; draw it in {handp}")
+        if len(rows) != 11:
+            raise SystemExit(f"{chr(cp)!r}: {len(rows)} rows, not 11")
+        glyphs[cp] = [len(rows[0]), 0, rows]
+    write(glyphs, 11, 9, name, set(hand), out or sys.stdout,
+          "# the rest made from GFOS Sans 13 px by gridfont.py shrink (one of two like rows and columns dropped).\n")
+    return glyphs
 
 def stems(rows):
     """runs of 2+ set pixels across that stay 2+ wide for 3+ rows down: a 2 px stem"""
@@ -252,6 +308,7 @@ def specimen(out, faces):
 if __name__ == "__main__":
     a = sys.argv[1:]
     if a and a[0] == "merge" and len(a) == 4: merge(a[1], a[2], a[3])
+    elif a and a[0] == "shrink" and len(a) == 4: shrink(a[1], a[2], a[3])
     elif a and a[0] == "check" and len(a) in (2, 3): sys.exit(1 if check(*a[1:]) else 0)
     elif a and a[0] == "specimen" and len(a) >= 3: specimen(a[1], [x.split("=", 1) for x in a[2:]])
     else: sys.exit(__doc__)

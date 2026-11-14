@@ -84,6 +84,39 @@ check(made[0xE8][0].index("#") < made[0xE8][1].index("#"), "grave leans left")
 check(all(made[c][10:12] != ["." * len(made[c][0])] * 2 for c in gridfont.CEDILLA), "the cedilla hangs under the baseline")
 check(gridfont.compose({ord("e"): hand[ord("e")]}).keys() == {0xE8, 0xE9, 0xEA, 0xEB}, "only letters that are drawn are made")
 
+# GFOS Sans 11 px (Lisette, 14 Nov): made from 13 px by shrink, the 11 px hand file over it
+check(gridfont.drop_like(["a", "b", "b", "c"], 1) == ["a", "b", "c"], "drop_like drops one of two like rows")
+check(gridfont.drop_like(["a", "b", "c"], 1) is None, "drop_like: None with no like rows")
+check(gridfont.drop_like(["x", "x", "y", "y", "y", "z"], 1) == ["x", "x", "y", "y", "z"], "the like pair nearest the middle goes")
+check(gridfont.narrow([".#....#."] * 3) == [".#...#."] * 3, "narrow: a column of two like ones goes")
+check(gridfont.narrow(["#.....#", ".#...#.", "..#.#..", "...#..."]) == ["#.....#", ".#...#.", "..#.#..", "...#..."],
+      "narrow: a diagonal letter keeps its width")
+check(gridfont.narrow([".##.", ".##."]) == [".##.", ".##."], "narrow: under 7 columns unchanged")
+out = subprocess.run([sys.executable, "tools/gridfont.py", "shrink", "src/gfos-sans-13.txt", "src/gfos-sans-11-hand.txt",
+                      "GFOS Sans Regular 11"], capture_output=True, text=True)
+check(out.returncode == 0 and out.stdout == open("src/gfos-sans-11.txt", encoding="utf-8").read(),
+      "src/gfos-sans-11.txt is the shrink, as committed")
+g11, s11, a11 = gridfont.read("src/gfos-sans-11.txt")
+h11 = gridfont.read_hand("src/gfos-sans-11-hand.txt")
+check(s11 == 11 and a11 == 9 and sorted(g11) == list(range(0x20, 0x7F)), "11 px, ascent 9, $20-$7E")
+check(all(len(r) == 11 and len({len(x) for x in r}) == 1 for _, _, r in g11.values()), "11 rows, one width each")
+check(gridfont.check("src/gfos-sans-11.txt") == 0, "every 11 px glyph: 1 px stems, no blobs")
+check(all(len(r) == 11 for r in h11.values()), "the 11 px hand file: 11 rows each")
+check({g11[ord(c)][0] for c in "0123456789"} == {6}, "11 px figures all 6 wide")
+for ch in "acemnorsuvwxz":
+    r = g11[ord(ch)][2]
+    check("#" in r[4] and "#" in r[8] and not any("#" in x for x in r[:4] + r[9:]), f"11 px {ch}: x-height rows 4-8")
+for ch in "ABDEFHKLMNPRTUVWXYZ0123456789":
+    r = g11[ord(ch)][2]
+    check("#" in r[2] and "#" in r[8] and not any("#" in x for x in r[:2] + r[9:]), f"11 px {ch}: rows 2-8")
+for ch in "gjpqy":
+    check("#" in g11[ord(ch)][2][10], f"11 px {ch}: down to row 10")
+check(g11[ord("f")][2] != g11[ord("t")][2] and "#" in g11[ord("f")][2][1] and "#" not in g11[ord("t")][2][1],
+      "11 px: f keeps its hook, t none")
+check(all(g11[ord(c)][0] <= g[ord(c)][0] for c in "abcdefghijklmnopqrstuvwxyz"), "11 px letters no wider than 13 px")
+for ch in "SKXZ2$%&@<>":
+    check(ord(ch) in h11, f"11 px {ch!r} drawn by hand")
+
 # the specimen draws
 with tempfile.TemporaryDirectory() as d:
     p = os.path.join(d, "s.png")
