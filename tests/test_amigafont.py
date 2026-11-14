@@ -83,5 +83,15 @@ try:
     check(False, "two grids of one size refused")
 except SystemExit:
     check(True, "two grids of one size refused")
+# the ROM's system default text (GFOS Mono 11, openintuition's fonts/): the C data is the font file's bitmap
+import re
+hdr = amigafont.c_header("src/gfos-mono-11.txt", "GFOSMono.font", "oi_gfm11")
+gm11, _, a11 = gridfont.read("src/gfos-mono-11.txt")
+loc, space, modulo, plane = amigafont.bitmap(gm11, 11, a11)
+data = bytes(int(x, 16) for x in re.findall(r"0x([0-9a-f]{2}),", hdr.split("_data[")[1].split("};")[0]))
+locs = [int(x, 16) for x in re.findall(r"0x([0-9a-f]{8}),", hdr.split("_loc[")[1].split("};")[0])]
+check(data == bytes(plane) and locs == [(x << 16) | w for x, w in loc], "c header: the bitmap and locations as built")
+check('#define OI_GFM11_NAME "GFOSMono.font"' in hdr and "#define OI_GFM11_XSIZE 7" in hdr and
+      "#define OI_GFM11_BASELINE 8" in hdr and "_space[" not in hdr, "c header: GFOSMono.font 11, 7 wide, baseline 8, fixed")
 print(f"test_amigafont: {oks + fails} checks, {fails} failed")
 sys.exit(1 if fails else 0)

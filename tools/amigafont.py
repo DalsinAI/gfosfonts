@@ -4,6 +4,8 @@
   amigafont.py build FONT.txt NAME OUTDIR [MORE.txt...]   writes OUTDIR/NAME/<size> for each grid and
                                             OUTDIR/NAME.font (the contents file) listing every size
   amigafont.py dump OUTDIR/NAME/<size>      prints what a font file holds (size, baseline, chars, widths)
+  amigafont.py c FONT.txt NAME OUT.h PREFIX  writes the grid as C constant data for a ROM font (openintuition's
+                                            fonts/: the system default text, added to the font list at start)
 
 The font file is one code hunk (MOVEQ #-1,D0; RTS so that running it by mistake does nothing), then the
 DiskFontHeader, the TextFont, the character locations, spacing and kerning and the glyph bitmap, with a RELOC32
@@ -180,10 +182,40 @@ def build(src, name, outdir, *more):
         fp.write(contents_file(name, sorted(sizes), flags))
 
 
+def c_header(src, name, prefix):
+    """the grid as C constant data (tf_CharData, tf_CharLoc and the TextFont's numbers), for a ROM font"""
+    import hashlib
+    glyphs, size, ascent = gridfont.read(src)
+    loc, space, modulo, plane = bitmap(glyphs, size, ascent)
+    fw, P = fixed_width(glyphs), prefix.upper()
+    sha = hashlib.sha256(open(src, "rb").read()).hexdigest()
+    out = [f"/* {name} {size} as constant data, made by gfosfonts' tools/amigafont.py:",
+           f" *   amigafont.py c {src} {name} OUT {prefix}",
+           f" * from {src} (sha256 {sha}).",
+           " * GFOS's own pixel font: the fonts' licence is gfosfonts' LICENSE-FONTS (DejaVu's changes are public",
+           " * domain; the notice goes with every copy). Don't edit by hand: change the grid, then make this again. */",
+           f'#define {P}_NAME "{name}"', f"#define {P}_YSIZE {size}", f"#define {P}_XSIZE {fw or max(space)}",
+           f"#define {P}_BASELINE {ascent - 1}", f"#define {P}_BOLDSMEAR 1",
+           f"#define {P}_LOCHAR {LO}", f"#define {P}_HICHAR {HI}", f"#define {P}_MODULO {modulo}",
+           f"/* tf_CharData: {size} rows of {modulo} bytes */",
+           f"static const unsigned char {prefix}_data[{len(plane)}] = {{"]
+    out += ["    " + " ".join(f"0x{b:02x}," for b in plane[i:i + 16]) for i in range(0, len(plane), 16)]
+    out += ["};", f"/* tf_CharLoc: for each character {LO} to {HI} and the default glyph, its first bit (high word) "
+            "and width (low word) */", f"static const unsigned long {prefix}_loc[{len(loc)}] = {{"]
+    words = [f"0x{(x << 16) | w:08x}," for x, w in loc]
+    out += ["    " + " ".join(words[i:i + 8]) for i in range(0, len(words), 8)]
+    if not fw:
+        out += ["};", f"static const short {prefix}_space[{len(space)}] = {{"]
+        out += ["    " + " ".join(f"{v}," for v in space[i:i + 16]) for i in range(0, len(space), 16)]
+    return "\n".join(out + ["};"]) + "\n"
+
+
 if __name__ == "__main__":
     a = sys.argv[1:]
     if len(a) >= 4 and a[0] == "build":
         build(*a[1:])
+    elif len(a) == 5 and a[0] == "c":
+        open(a[3], "w").write(c_header(a[1], a[2], a[4]))
     elif len(a) == 2 and a[0] == "dump":
         f = read(open(a[1], "rb").read())
         print(f"{f['name']}: {f['size']} px, baseline {f['baseline']}, chars ${f['lo']:02X}-${f['hi']:02X}, "
