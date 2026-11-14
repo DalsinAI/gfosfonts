@@ -77,6 +77,22 @@ check(fm["flags"] == amigafont.FPF_DISKFONT | amigafont.FPF_DESIGNED and fm["xsi
 check(struct.unpack_from(">HBB", fcm, 4 + 256)[2] == fm["flags"], "GFOSMono.font's entry: the same flags")
 check(set(fm["space"]) == {8} and all(amigafont.glyph_rows(fm, c) == gmono[c][2] for c in gmono),
       "GFOSMono: every character, the default box too, 8 wide; every glyph reads back")
+# the glyph strip: tf_CharLoc's offsets are 16 bits, so every face and size stays under 65,536 px wide
+with tempfile.TemporaryDirectory() as d:
+    widths = {}
+    for face, stem in (("GFOSSans", "gfos-sans"), ("GFOSSansBold", "gfos-sans-bold"), ("GFOSMono", "gfos-mono")):
+        amigafont.build(f"src/{stem}-13.txt", face, d, f"src/{stem}-11.txt", f"src/{stem}-16.txt")
+        for n in (11, 13, 16):
+            ff = amigafont.read(open(os.path.join(d, face, str(n)), "rb").read())
+            widths[f"{face}/{n}"] = max(x + w for x, w in ff["loc"])
+check(len(widths) == 9 and all(w <= amigafont.MAX_STRIP for w in widths.values()),
+      f"every face's glyph strip under 65,536 px (widest {max(widths.values())})")
+wide = {c: (300, 0, ["." * 300] * 13) for c in range(0x20, 0x100)}
+try:
+    amigafont.bitmap(wide, 13, 10)
+    check(False, "a glyph strip over 65,535 px refused")
+except SystemExit:
+    check(True, "a glyph strip over 65,535 px refused")
 try:
     with tempfile.TemporaryDirectory() as d:
         amigafont.build("src/gfos-sans-13.txt", "GFOSSans", d, "src/gfos-sans-13.txt")

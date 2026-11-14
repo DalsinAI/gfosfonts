@@ -21,6 +21,7 @@ NT_FONT = 12
 FPF_DISKFONT, FPF_PROPORTIONAL, FPF_DESIGNED = 0x02, 0x20, 0x40
 HUNK_HEADER, HUNK_CODE, HUNK_RELOC32, HUNK_END = 0x3F3, 0x3E9, 0x3EC, 0x3F2
 LO, HI = 0x20, 0xFF
+MAX_STRIP = 0xFFFF                                    # the widest glyph strip tf_CharLoc can address
 
 
 def default_glyph(size, ascent):
@@ -45,6 +46,9 @@ def bitmap(glyphs, size, ascent):
         w, rows = (g[0], g[2]) if g else (dw, drows)
         pieces.append((cols, w, rows))
         cols += w
+    if cols > MAX_STRIP:
+        raise SystemExit(f"amigafont: the glyph strip is {cols} px wide; tf_CharLoc's offsets are 16 bits, "
+                         f"so it must be at most {MAX_STRIP}")
     modulo = ((cols + 15) // 16) * 2
     plane = bytearray(modulo * size)
     loc, space = [], []
