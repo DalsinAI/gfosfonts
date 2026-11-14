@@ -50,8 +50,8 @@ check(struct.unpack_from(">H", fc2, 4 + 256)[0] == 11 and struct.unpack_from(">H
 g11 = gridfont.read("src/gfos-sans-11.txt")[0]
 check(f11["size"] == 11 and f11["baseline"] == 8, "11 px, baseline row 8")
 check(all(amigafont.glyph_rows(f11, c) == g11[c][2] for c in g11), "every 11 px glyph reads back as its grid")
-check(all(amigafont.glyph_rows(f11, c) == amigafont.glyph_rows(f11, 0x100) for c in range(0xA0, 0x100)),
-      "11 px: Latin-1 not yet drawn, so it gets the default glyph")
+check(all(amigafont.glyph_rows(f11, c) == amigafont.glyph_rows(f11, 0x100) for c in range(0x7F, 0xA0))
+      and amigafont.glyph_rows(f11, 0xE9) == g11[0xE9][2], "11 px: $7F-$9F the default glyph, Latin-1 drawn")
 try:
     with tempfile.TemporaryDirectory() as d:
         amigafont.build("src/gfos-sans-13.txt", "GFOSSans", d, "src/gfos-sans-13.txt")

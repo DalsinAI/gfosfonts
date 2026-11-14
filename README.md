@@ -16,8 +16,8 @@ Status: Dale approved the direction from the second sheet (14 Nov 04:36: "yes, g
 | `src/dejavu-sans-13-today.txt` | DejaVu Sans at 13 px exactly as GFOS draws it today (the `_ttf` font OpenBench uses), dumped by `tools/dump_grid` |
 | `src/gfos-sans-13-hand.txt` | the characters drawn by hand: a-z, A-Z, 0-9, all the ASCII punctuation, and Latin-1's letters with no plain base and its symbols |
 | `src/gfos-sans-13.txt` | GFOS Sans Regular 13 px: the hand set, and Latin-1's accented letters made from it (`compose`), over today's render (`gridfont.py merge`) |
-| `src/gfos-sans-11-hand.txt` | GFOS Sans 11 px: the characters drawn by hand at 11 px (a e k z K S X Z, the figures 2 4 9, $ % & @ < >) |
-| `src/gfos-sans-11.txt` | GFOS Sans Regular 11 px, $20-$7E: made from the 13 px face (`gridfont.py shrink`) with the 11 px hand set over it |
+| `src/gfos-sans-11-hand.txt` | GFOS Sans 11 px: the characters drawn by hand at 11 px (a e k z K S X Z, the figures 2 4 9, $ % & @ < >, and 21 Latin-1 symbols and letters with no plain base) |
+| `src/gfos-sans-11.txt` | GFOS Sans Regular 11 px, ISO-Latin-1: the 11 px hand set, the accented letters made from its own letters (`compose`), the rest made from the 13 px face (`gridfont.py shrink`) |
 | `specimens/gfos-sans-13-vs-dejavu.png`, `specimens/gfos-sans-13-latin1-20261114.png` | the specimen sheets: both faces, actual size and at 4x |
 | `tools/dump_grid.c` | dumps a TrueType face as GFOS draws it, as editable grids |
 | `tools/gridfont.py` | reads, checks, merges and draws the grids |
@@ -55,8 +55,8 @@ rows 1-8, capitals and figures rows 2-8 (7 px), x-height rows 4-8 (5 px), descen
 wide. `gridfont.py shrink` makes it from the 13 px face: above the x-height nothing changes, the x-height loses
 two rows and the descent one, each time one of two like rows (a straight stem or a bowl's sides) nearest the
 middle, and a glyph 7 or more wide loses one of two like inner columns. A glyph it can't make well is drawn in
-`src/gfos-sans-11-hand.txt`, which wins. This cut is ASCII; Latin-1 at 11 px is next (the font file gives
-those the default box until then).
+`src/gfos-sans-11-hand.txt`, which wins. Latin-1's accented letters are made from the 11 px letters the
+same way as at 13 px: a small letter's mark in rows 1-2, a capital lowered to rows 3-8 under its mark.
 
 ![GFOS Sans 11 px over 13 px](specimens/gfos-sans-11-vs-13-20261114.png)
 
@@ -70,7 +70,7 @@ those the default box until then).
 has problems in the same characters (233 in the first 63 alone); GFOS Sans has none in its hand-drawn and composed characters.
 
 ## Tests
-`tests/run.sh` (257 + 23 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
+`tests/run.sh` (284 + 23 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
 and checks that today's render is unchanged.
 
 ## Next (Dale, 14 Nov 04:36: finish Latin-1, then the other sizes, Bold and Mono)

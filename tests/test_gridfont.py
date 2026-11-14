@@ -98,7 +98,16 @@ check(out.returncode == 0 and out.stdout == open("src/gfos-sans-11.txt", encodin
       "src/gfos-sans-11.txt is the shrink, as committed")
 g11, s11, a11 = gridfont.read("src/gfos-sans-11.txt")
 h11 = gridfont.read_hand("src/gfos-sans-11-hand.txt")
-check(s11 == 11 and a11 == 9 and sorted(g11) == list(range(0x20, 0x7F)), "11 px, ascent 9, $20-$7E")
+check(s11 == 11 and a11 == 9 and sorted(g11) == list(range(0x20, 0x7F)) + list(range(0xA0, 0x100)),
+      "11 px, ascent 9, ISO-Latin-1 like 13 px ($20-$7E, $A0-$FF)")
+m11 = gridfont.compose({c: g11[c][2] for c in range(0x20, 0x7F)}, 11)
+check(all(g11[c][2] == m11[c] for c in m11) and len(m11) == 53, "11 px: the 53 accented letters made from its own letters")
+check(all("#" not in "".join(g11[ord(c)][2][3:4]) and "#" in "".join(g11[ord(c)][2][1:3]) for c in "àáâãäèéêëìíîïñòóôõöùúûüý"),
+      "11 px small marks in rows 1-2, row 3 clear")
+check(g11[0xC9][2][2] == "." * g11[0xC9][0] and "#" in g11[0xC9][2][3], "11 px É: the E lowered to rows 3-8 under its mark")
+check(all("#" in "".join(g11[c][2][9:]) for c in (0xC7, 0xE7)), "11 px: the cedilla hangs under the baseline")
+check(gridfont.lower_cap(["...."] * 2 + ["#..#"] * 7 + ["...."] * 2, 2, 9) == ["...."] * 3 + ["#..#"] * 6 + ["...."] * 2,
+      "lower_cap at 11 px: the capital moves from rows 2-8 to rows 3-8")
 check(all(len(r) == 11 and len({len(x) for x in r}) == 1 for _, _, r in g11.values()), "11 rows, one width each")
 check(gridfont.check("src/gfos-sans-11.txt") == 0, "every 11 px glyph: 1 px stems, no blobs")
 check(all(len(r) == 11 for r in h11.values()), "the 11 px hand file: 11 rows each")
@@ -114,8 +123,9 @@ for ch in "gjpqy":
 check(g11[ord("f")][2] != g11[ord("t")][2] and "#" in g11[ord("f")][2][1] and "#" not in g11[ord("t")][2][1],
       "11 px: f keeps its hook, t none")
 check(all(g11[ord(c)][0] <= g[ord(c)][0] for c in "abcdefghijklmnopqrstuvwxyz"), "11 px letters no wider than 13 px")
-for ch in "SKXZ2$%&@<>":
+for ch in "SKXZ2$%&@<>¢¤¥§©®ª«»¼½¾Æ×÷Øßæøþ¸":
     check(ord(ch) in h11, f"11 px {ch!r} drawn by hand")
+check(h11[ord("«")] == [r[::-1] for r in h11[ord("»")]], "11 px « and » mirror each other")
 
 # the specimen draws
 with tempfile.TemporaryDirectory() as d:

@@ -118,34 +118,42 @@ def put(rows, mark, y0, centre):
             if c == "#": rows[y0 + dy][x0 + dx] = "#"
     return ["".join(r) for r in rows]
 
-def lower_cap(rows):
-    """the capital in rows 1-9 moved down a row by dropping one of two like rows; None when it has none"""
-    for y in (5, 4, 6, 3, 7, 2):                        # a like pair, nearest the middle first, keeps the shape
+# Where the marks go at each size: the capitals' top row and the x-height's, the baseline row (the first row under
+# it), and the row a small letter's mark starts on. 13 px: capitals rows 1-9, x-height rows 3-9; 11 px: capitals
+# rows 2-8, x-height rows 4-8, a small letter's mark rows 1-2 (row 3 clear).
+GEOM = {13: dict(cap=1, xh=3, base=10, small=0), 11: dict(cap=2, xh=4, base=9, small=1)}
+
+def lower_cap(rows, cap=1, base=10):
+    """the capital (rows cap to base - 1) moved down a row by dropping one of two like rows, nearest the middle
+    first so the shape keeps its ends; None when it has none"""
+    mid = (cap + base - 1) / 2
+    for y in sorted(range(cap + 1, base - 2), key=lambda y: (abs(y + 0.5 - mid), -y)):
         if rows[y] == rows[y + 1] and "#" in rows[y]:
-            return [rows[0], "." * len(rows[0])] + rows[1:y] + rows[y + 1:]
+            return rows[:cap] + ["." * len(rows[0])] + rows[cap:y] + rows[y + 1:]
     return None
 
-def compose(hand):
+def compose(hand, size=13):
     """Latin-1's accented letters and the cedillas from the hand-drawn letters: {codepoint: rows}"""
+    g = GEOM[size]
     out = {}
     for cp, name in LATIN1.items():
         letter, mark = name[0], name[1:]
         base = hand.get(ord(letter))
         if base is None: continue
         if letter.isupper():
-            moved = lower_cap(base)
+            moved = lower_cap(base, g["cap"], g["base"])
             rows = moved or base
-            out[cp] = put(rows, MARKS_CAP[mark], 0, ink_centre(rows, 1, 10))
+            out[cp] = put(rows, MARKS_CAP[mark], 0, ink_centre(rows, g["cap"], g["base"]))
         else:
             rows = list(base)
             if letter in "ij":                          # the dotless letter under the mark
-                rows = ["." * len(rows[0])] * 3 + rows[3:]
-            out[cp] = put(rows, MARKS_SMALL[mark], 0, ink_centre(rows, 3, 10))
+                rows = ["." * len(rows[0])] * g["xh"] + rows[g["xh"]:]
+            out[cp] = put(rows, MARKS_SMALL[mark], g["small"], ink_centre(rows, g["xh"], g["base"]))
     for cp, letter in CEDILLA.items():
         base = hand.get(ord(letter))
         if base is None: continue
-        c = ink_centre(base, 1 if letter.isupper() else 3, 10)
-        out[cp] = put(base, [".#", "#."], 10, c + 0.5)
+        c = ink_centre(base, g["cap"] if letter.isupper() else g["xh"], g["base"])
+        out[cp] = put(base, [".#", "#."], g["base"], c + 0.5)
     return out
 
 def merge(base, handp, name):
@@ -197,17 +205,23 @@ def shrink_rows(rows):
     return narrow(["." * len(rows[0])] + rows[0:3] + xh + de)
 
 def shrink(base, handp, name, out=None):
-    """the 11 px face: $20-$7E made from the 13 px face, the 11 px hand file over it"""
+    """the 11 px face, ISO-Latin-1 like the 13 px one: the 11 px hand file first, then Latin-1's accented letters
+    made from the 11 px letters (compose), then the rest made from the 13 px face"""
     g13, size, ascent = read(base)
     hand = read_hand(handp)
     glyphs = {}
-    for cp in range(0x20, 0x7F):
-        rows = hand.get(cp) or (shrink_rows(g13[cp][2]) if cp in g13 else None)
+    def one(cp, made):
+        rows = hand.get(cp) or made.get(cp) or (shrink_rows(g13[cp][2]) if cp in g13 else None)
         if rows is None:
             raise SystemExit(f"{chr(cp)!r}: can't be made from 13 px; draw it in {handp}")
         if len(rows) != 11:
             raise SystemExit(f"{chr(cp)!r}: {len(rows)} rows, not 11")
         glyphs[cp] = [len(rows[0]), 0, rows]
+    for cp in range(0x20, 0x7F):
+        one(cp, {})
+    made = compose({cp: g[2] for cp, g in glyphs.items()}, 11)
+    for cp in range(0xA0, 0x100):
+        one(cp, made)
     write(glyphs, 11, 9, name, set(hand), out or sys.stdout,
           "# the rest made from GFOS Sans 13 px by gridfont.py shrink (one of two like rows and columns dropped).\n")
     return glyphs
