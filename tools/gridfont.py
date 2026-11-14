@@ -72,7 +72,17 @@ def read_hand(path):
         glyphs[cur].append(line)
     return glyphs
 
+def blank_right(glyphs):
+    """Every glyph keeps one blank column at the right of its advance (Ivanova, 14 Nov 2026): OS 3.2's
+    listbrowser loses a right-justified cell's last column, so ink there reads 'MB' as 'ME'. For a bitmap
+    face that is space >= kern + ink width + 1. A glyph inked in its last column gets one more, blank."""
+    for cp, (w, o, rows) in list(glyphs.items()):
+        if any(len(r) >= w and r[w - 1] == "#" for r in rows):
+            glyphs[cp] = [w + 1, o, [r + "." for r in rows]]
+    return glyphs
+
 def write(glyphs, size, ascent, name, hand, out, note=None):
+    blank_right(glyphs)
     out.write(f"# {name}: GFOS's own pixel font. Hand-drawn characters marked 'hand';\n")
     out.write(note or "# the rest still DejaVu Sans as GFOS draws it today (tools/dump_grid), to be redrawn.\n")
     out.write("# DejaVu changes are public domain; the fonts' licence: LICENSE-FONTS.\n")
