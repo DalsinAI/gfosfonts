@@ -34,6 +34,10 @@ def default_glyph(size, ascent):
 def bitmap(glyphs, size, ascent):
     """(locations, spacing, modulo, plane): every glyph from LO to HI and the default glyph after them"""
     dw, drows = default_glyph(size, ascent)
+    fw = fixed_width(glyphs)
+    if fw and fw > dw:                                   # a monospaced face: the box takes the same width
+        drows = [r + "." * (fw - dw) for r in drows]
+        dw = fw
     order = [glyphs.get(c) for c in range(LO, HI + 1)] + [None]
     xs, cols = [], 0
     pieces = []
@@ -57,6 +61,15 @@ def bitmap(glyphs, size, ascent):
                     plane[y * modulo + (b >> 3)] |= 0x80 >> (b & 7)
     return loc, space, modulo, plane
 
+
+def fixed_width(glyphs):
+    """the one width every glyph has (a monospaced face), else None"""
+    ws = {g[0] for g in glyphs.values()}
+    return ws.pop() if len(ws) == 1 else None
+
+def font_flags(glyphs):
+    """DISKFONT and DESIGNED, and PROPORTIONAL unless every glyph is one width"""
+    return FPF_DISKFONT | FPF_DESIGNED | (0 if fixed_width(glyphs) else FPF_PROPORTIONAL)
 
 def font_file(glyphs, size, ascent, name):
     """the font file's bytes"""
@@ -84,8 +97,8 @@ def font_file(glyphs, size, ascent, name):
     t = d + 54                                                    # struct TextFont
     h[t + 8] = NT_FONT
     ptr(t + 10, d + 22)
-    nwidth = glyphs.get(ord("n"), (7,))[0]
-    struct.pack_into(">HHBBHHHHBB", h, t + 18, 52, size, 0, FPF_DISKFONT | FPF_PROPORTIONAL | FPF_DESIGNED,
+    nwidth = fixed_width(glyphs) or glyphs.get(ord("n"), (7,))[0]
+    struct.pack_into(">HHBBHHHHBB", h, t + 18, 52, size, 0, font_flags(glyphs),
                      nwidth, ascent - 1, 1, 0, LO, HI)
     struct.pack_into(">H", h, t + 38, modulo)
     ptr(t + 40, add(b"".join(struct.pack(">HH", o, w) for o, w in loc)))
@@ -100,14 +113,14 @@ def font_file(glyphs, size, ascent, name):
     return out
 
 
-def contents_file(name, sizes):
+def contents_file(name, sizes, flags=FPF_DISKFONT | FPF_PROPORTIONAL | FPF_DESIGNED):
     """NAME.font: a FontContentsHeader and one FontContents (260 bytes) per size, 'NAME/<size>'"""
     b = bytearray(struct.pack(">HH", FCH_ID, len(sizes)))
     for y in sizes:
         e = bytearray(260)
         f = f"{name}/{y}".encode()
         e[:len(f)] = f
-        struct.pack_into(">HBB", e, 256, y, 0, FPF_DISKFONT | FPF_PROPORTIONAL | FPF_DESIGNED)
+        struct.pack_into(">HBB", e, 256, y, 0, flags)
         b += e
     return bytes(b)
 
@@ -154,16 +167,17 @@ def glyph_rows(f, c):
 def build(src, name, outdir, *more):
     """one font file per grid (one size each), and the contents file listing the sizes, smallest first"""
     os.makedirs(os.path.join(outdir, name), exist_ok=True)
-    sizes = []
+    sizes, flags = [], FPF_DISKFONT | FPF_PROPORTIONAL | FPF_DESIGNED
     for path in (src,) + more:
         glyphs, size, ascent = gridfont.read(path)
         if size in sizes:
             raise SystemExit(f"{path}: a second {size} px grid")
         sizes.append(size)
+        flags = font_flags(glyphs)
         with open(os.path.join(outdir, name, str(size)), "wb") as fp:
             fp.write(font_file(glyphs, size, ascent, f"{name}.font"))
     with open(os.path.join(outdir, name + ".font"), "wb") as fp:
-        fp.write(contents_file(name, sorted(sizes)))
+        fp.write(contents_file(name, sorted(sizes), flags))
 
 
 if __name__ == "__main__":

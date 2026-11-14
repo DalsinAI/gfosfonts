@@ -190,6 +190,26 @@ check(gb[0x22][2][1] == ".##.##." and gb[0xA8][2][1] == ".##.##.", "Bold: \" and
 for ch in "$¢ªº¼¾ð":
     check(ord(ch) in hb, f"Bold {ch!r} drawn by hand")
 
+# GFOS Mono 13 px (Lisette, 14 Nov): every character 8 wide
+check(gridfont.fit([".#.", "##."]) == ["...#....", "..##...."], "fit: ink centred in columns 0-6")
+check(gridfont.fit(["########"]) is None, "fit: 8 columns of ink don't fit")
+out = subprocess.run([sys.executable, "tools/gridfont.py", "mono", "src/gfos-sans-13.txt", "src/gfos-mono-13-hand.txt",
+                      "GFOS Mono 13"], capture_output=True, text=True)
+check(out.returncode == 0 and out.stdout == open("src/gfos-mono-13.txt", encoding="utf-8").read(),
+      "src/gfos-mono-13.txt is the mono, as committed")
+gm, sm, am = gridfont.read("src/gfos-mono-13.txt")
+hm = gridfont.read_hand("src/gfos-mono-13-hand.txt")
+check(sm == 13 and am == 10 and sorted(gm) == sorted(g), "Mono 13: ascent 10, the same 191 characters as Sans")
+check({w for w, _, _ in gm.values()} == {8} and all(len(r) == 13 for _, _, r in gm.values()), "Mono: every glyph 8 wide, 13 rows")
+check(all(all(row[7] == "." for row in gm[c][2]) for c in gm if c != ord("_")), "Mono: column 7 clear, the gap")
+check(gridfont.check("src/gfos-mono-13.txt") == 0, "Mono: 1 px stems, no blobs")
+for ch in "%&@MWmw©®¼½¾ÆÐæijlIfrt":
+    check(ord(ch) in hm, f"Mono {ch!r} drawn by hand")
+check("#" in gm[ord("f")][2][0] and "#" not in gm[ord("t")][2][0] and gm[ord("t")][2][9].count("#") > 1,
+      "Mono: f has its hook, t its foot")
+mm = gridfont.compose({c: gm[c][2] for c in gm if c not in gridfont.LATIN1 and c not in gridfont.CEDILLA}, 13)
+check(all(gm[c][2] == mm[c] for c in mm) and len(mm) == 53, "Mono: the accented letters made from the mono letters")
+
 # the specimen draws
 with tempfile.TemporaryDirectory() as d:
     p = os.path.join(d, "s.png")

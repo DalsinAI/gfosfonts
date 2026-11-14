@@ -22,6 +22,8 @@ Status: Dale approved the direction from the second sheet (14 Nov 04:36: "yes, g
 | `src/gfos-sans-16.txt` | GFOS Sans Regular 16 px, ISO-Latin-1: the 16 px hand set, the accented letters made from its own letters, the rest made from the 13 px face (`gridfont.py grow`) |
 | `src/gfos-sans-bold-13-hand.txt` | GFOS Sans Bold 13 px: the characters drawn by hand (where doubling the stems fills a counter, and " ¨) |
 | `src/gfos-sans-bold-13.txt` | GFOS Sans Bold 13 px, ISO-Latin-1: Regular 13 set again a pixel to the right (`gridfont.py bold`), the accented letters made from the bold letters |
+| `src/gfos-mono-13-hand.txt` | GFOS Mono 13 px: the characters drawn by hand (too wide for 8 columns, and the slabbed i j l I f r t) |
+| `src/gfos-mono-13.txt` | GFOS Mono 13 px, ISO-Latin-1: every character 8 wide (`gridfont.py mono`) |
 | `specimens/gfos-sans-13-vs-dejavu.png`, `specimens/gfos-sans-13-latin1-20261114.png` | the specimen sheets: both faces, actual size and at 4x |
 | `tools/dump_grid.c` | dumps a TrueType face as GFOS draws it, as editable grids |
 | `tools/gridfont.py` | reads, checks, merges and draws the grids |
@@ -84,6 +86,14 @@ are made from the bold letters with the regular marks, which stay open. The Amig
 
 ![GFOS Sans Bold 13 px over Regular](specimens/gfos-sans-bold-13-20261114.png)
 
+## GFOS Mono 13 px
+Every character 8 wide, for the shell, code and anything in columns. A GFOS Sans Regular 13 glyph whose ink is
+7 columns or fewer is centred in columns 0-6, so column 7 is always the gap between characters (`gridfont.py
+mono`); the wider ones (% & @ M W m w and others) and the narrow i j l I f r t, which get slabs to fill their cell,
+are drawn in `src/gfos-mono-13-hand.txt`. The Amiga font `GFOSMono.font` is marked not proportional, tf_XSize 8.
+
+![GFOS Mono 13 px](specimens/gfos-mono-13-20261114.png)
+
 ## Rules for the hand-drawn set (from the decision)
 - Stems 1 px at the small sizes, the same in every letter.
 - Round shoulders on n, m, h, a and d: a one-pixel diagonal step, never a 2x2 blob.
@@ -94,7 +104,7 @@ are made from the bold letters with the regular marks, which stay open. The Amig
 has problems in the same characters (233 in the first 63 alone); GFOS Sans has none in its hand-drawn and composed characters.
 
 ## Tests
-`tests/run.sh` (391 + 26 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
+`tests/run.sh` (422 + 29 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
 and checks that today's render is unchanged.
 
 ## Next (Dale, 14 Nov 04:36: finish Latin-1, then the other sizes, Bold and Mono)
