@@ -165,6 +165,31 @@ for ch in "<>Kz§©«®»¼½¾×æ÷ø24":
 check(h16[ord("<")] == [r[::-1] for r in h16[ord(">")]] and h16[ord("«")] == [r[::-1] for r in h16[ord("»")]],
       "16 px < > and « » mirror each other")
 
+# GFOS Sans Bold 13 px (Lisette, 14 Nov): Regular 13 set again a pixel right, the Bold hand file over it
+check(gridfont.smear([".#..", "#..#"]) == [".##..", "##.##"], "smear: each pixel set again one to the right")
+check(gridfont.counters([".###.", ".#.#.", ".###."]) == 1 and gridfont.counters(["#..", "#.."]) == 0,
+      "counters: a closed inside counts, an open one doesn't")
+out = subprocess.run([sys.executable, "tools/gridfont.py", "bold", "src/gfos-sans-13.txt", "src/gfos-sans-bold-13-hand.txt",
+                      "GFOS Sans Bold 13"], capture_output=True, text=True)
+check(out.returncode == 0 and out.stdout == open("src/gfos-sans-bold-13.txt", encoding="utf-8").read(),
+      "src/gfos-sans-bold-13.txt is the bold, as committed")
+gb, sb, ab = gridfont.read("src/gfos-sans-bold-13.txt")
+hb = gridfont.read_hand("src/gfos-sans-bold-13-hand.txt")
+check(sb == 13 and ab == 10 and sorted(gb) == sorted(g), "Bold 13: ascent 10, the same 191 characters as Regular")
+check(all(len(r) == 13 and len({len(x) for x in r}) == 1 for _, _, r in gb.values()), "Bold: 13 rows, one width each")
+check(all(gb[c][0] == g[c][0] + 1 for c in g if c not in hb and c not in gridfont.LATIN1 and c not in gridfont.CEDILLA),
+      "Bold: every smeared glyph one column wider than Regular")
+check(all(gridfont.counters(gb[c][2]) >= gridfont.counters(g[c][2]) for c in g if c not in hb),
+      "Bold: no counter filled outside the hand file")
+check(all("##" in "".join(gb[ord(ch)][2][4:9]) for ch in "nmhulbdpq"), "Bold: 2 px stems")
+for ch in "aeoBR8":
+    check(gridfont.counters(gb[ord(ch)][2]) == gridfont.counters(g[ord(ch)][2]), f"Bold {ch}: its counters stay open")
+mb = gridfont.compose({c: gb[c][2] for c in gb if c not in gridfont.LATIN1 and c not in gridfont.CEDILLA}, 13)
+check(all(gb[c][2] == mb[c] for c in mb) and len(mb) == 53, "Bold: the accented letters made from the bold letters")
+check(gb[0x22][2][1] == ".##.##." and gb[0xA8][2][1] == ".##.##.", "Bold: \" and ¨ keep their two marks apart")
+for ch in "$¢ªº¼¾ð":
+    check(ord(ch) in hb, f"Bold {ch!r} drawn by hand")
+
 # the specimen draws
 with tempfile.TemporaryDirectory() as d:
     p = os.path.join(d, "s.png")

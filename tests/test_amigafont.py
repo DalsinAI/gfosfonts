@@ -61,6 +61,12 @@ check(struct.unpack_from(">H", fc3, 2)[0] == 3 and [struct.unpack_from(">H", fc3
       == [11, 13, 16], "three sizes: 11, 13, 16")
 check(f16["size"] == 16 and f16["baseline"] == 12 and all(amigafont.glyph_rows(f16, c) == g16[c][2] for c in g16),
       "16 px, baseline row 12, every glyph reads back")
+with tempfile.TemporaryDirectory() as d:
+    amigafont.build("src/gfos-sans-bold-13.txt", "GFOSSansBold", d)
+    fb = amigafont.read(open(os.path.join(d, "GFOSSansBold", "13"), "rb").read())
+gbold = gridfont.read("src/gfos-sans-bold-13.txt")[0]
+check(fb["name"] == "GFOSSansBold.font" and all(amigafont.glyph_rows(fb, c) == gbold[c][2] for c in gbold),
+      "GFOSSansBold/13: named GFOSSansBold.font, every glyph reads back")
 try:
     with tempfile.TemporaryDirectory() as d:
         amigafont.build("src/gfos-sans-13.txt", "GFOSSans", d, "src/gfos-sans-13.txt")
