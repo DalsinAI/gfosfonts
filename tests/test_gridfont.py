@@ -61,6 +61,12 @@ check(all("#" in "".join(hand[ord(c)][1:10]) and "#" not in "".join(hand[ord(c)]
       "Æ Ø Ð Þ stand on the baseline, capitals' height")
 check(all("#" in "".join(hand[ord(c)][10:]) for c in "þµ"), "þ and µ go under the baseline")
 
+# Latin-1 complete: every character from $A0 to $FF drawn by hand or made from the hand set (Lisette, 14 Nov)
+check(all(c in hand or c in gridfont.compose(hand) for c in range(0xA0, 0x100)), "$A0-$FF all drawn or made")
+check(len(hand[0xA0][0]) == gridfont.read("src/gfos-sans-13.txt")[0][0x20][0] and "#" not in "".join(hand[0xA0]),
+      "NBSP: blank, as wide as a space")
+check(hand[0xAD] == hand[ord("-")], "the soft hyphen is the hyphen")
+
 # Latin-1's accented letters, made from the hand set (Lisette, 14 Nov)
 made = gridfont.compose(hand)
 check(set(made) == set(gridfont.LATIN1) | set(gridfont.CEDILLA) and len(made) == 53, "53 accented letters made")

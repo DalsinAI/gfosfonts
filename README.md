@@ -14,7 +14,7 @@ Status: Dale approved the direction from the second sheet (14 Nov 04:36: "yes, g
 | File | What |
 | --- | --- |
 | `src/dejavu-sans-13-today.txt` | DejaVu Sans at 13 px exactly as GFOS draws it today (the `_ttf` font OpenBench uses), dumped by `tools/dump_grid` |
-| `src/gfos-sans-13-hand.txt` | the characters corrected by hand so far: a-z, A-Z, 0-9, all the ASCII punctuation, ß æ Æ ø Ø ð Ð þ Þ µ and 15 Latin-1 symbols |
+| `src/gfos-sans-13-hand.txt` | the characters drawn by hand: a-z, A-Z, 0-9, all the ASCII punctuation, and Latin-1's letters with no plain base and its symbols |
 | `src/gfos-sans-13.txt` | GFOS Sans Regular 13 px: the hand set, and Latin-1's accented letters made from it (`compose`), over today's render (`gridfont.py merge`) |
 | `specimens/gfos-sans-13-vs-dejavu.png`, `specimens/gfos-sans-13-latin1-20261114.png` | the specimen sheets: both faces, actual size and at 4x |
 | `tools/dump_grid.c` | dumps a TrueType face as GFOS draws it, as editable grids |
@@ -56,11 +56,11 @@ the same size as FONTS:_ttf/DejaVuSans.ttf on Instance-32).
 has problems in the same characters (233 in the first 63 alone); GFOS Sans has none in its hand-drawn and composed characters.
 
 ## Tests
-`tests/run.sh` (182 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
+`tests/run.sh` (185 checks). With `GFOPENFONT=<gfopenfont checkout>` it also rebuilds `dump_grid`
 and checks that today's render is unchanged.
 
 ## Next (Dale, 14 Nov 04:36: finish Latin-1, then the other sizes, Bold and Mono)
-The last Latin-1 symbols (§ © ® £ ¥ ¢ ¹ ² ³ ª º ¼ ½ ¾ ¶ ¤; $80-$9F left empty), Bold, 11 and 16 px, GFOS Mono 8x16 and 10x20,
+Latin-1 is complete ($80-$9F left empty). Bold, 11 and 16 px, GFOS Mono 8x16 and 10x20,
 hires (1:2) cuts, then the build to Amiga diskfont `.font` files.
 
 ## Licences
