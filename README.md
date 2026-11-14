@@ -12,7 +12,7 @@ Status: **specimen sheet only, for Dale to judge** (second cut, 14 Nov: the ASCI
 | --- | --- |
 | `src/dejavu-sans-13-today.txt` | DejaVu Sans at 13 px exactly as GFOS draws it today (the `_ttf` font OpenBench uses), dumped by `tools/dump_grid` |
 | `src/gfos-sans-13-hand.txt` | the characters corrected by hand so far: a-z, A-Z, 0-9 and all the ASCII punctuation |
-| `src/gfos-sans-13.txt` | GFOS Sans Regular 13 px: the hand set over today's render (`gridfont.py merge`) |
+| `src/gfos-sans-13.txt` | GFOS Sans Regular 13 px: the hand set, and Latin-1's accented letters made from it (`compose`), over today's render (`gridfont.py merge`) |
 | `specimens/gfos-sans-13-vs-dejavu.png` | the specimen sheet: both faces, actual size and at 4x |
 | `tools/dump_grid.c` | dumps a TrueType face as GFOS draws it, as editable grids |
 | `tools/gridfont.py` | reads, checks, merges and draws the grids |

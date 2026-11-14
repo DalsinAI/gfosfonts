@@ -55,6 +55,23 @@ check(size == 13 and ascent == 10 and len(g) == 191, "13 px, ascent 10, ISO-Lati
 check(not any(0x7F <= c <= 0x9F for c in g), "$7F-$9F left empty")
 check(gridfont.check("src/gfos-sans-13.txt", "src/gfos-sans-13-hand.txt") == 0, "gridfont check passes")
 
+# Latin-1's accented letters, made from the hand set (Lisette, 14 Nov)
+made = gridfont.compose(hand)
+check(set(made) == set(gridfont.LATIN1) | set(gridfont.CEDILLA) and len(made) == 53, "53 accented letters made")
+check(all(len(r) == 13 and not gridfont.stems(r) and not gridfont.blobs(r) for r in made.values()),
+      "each made letter: 13 rows, 1 px stems, no blobs")
+for cp in gridfont.LATIN1:
+    r = made[cp]
+    check("#" in r[0] + r[1], f"U+{cp:04X}: its mark is in rows 0-1")
+    if chr(cp).isupper():
+        check(all("#" in row for row in r[2:10]) and "#" not in "".join(r[10:]), f"U+{cp:04X}: the capital in rows 2-9")
+    else:
+        check(r[3:] == (hand[ord(gridfont.LATIN1[cp][0])][3:]), f"U+{cp:04X}: the letter under its mark as drawn")
+check(made[0xE9][0].index("#") > made[0xE9][1].index("#"), "acute leans right")
+check(made[0xE8][0].index("#") < made[0xE8][1].index("#"), "grave leans left")
+check(all(made[c][10:12] != ["." * len(made[c][0])] * 2 for c in gridfont.CEDILLA), "the cedilla hangs under the baseline")
+check(gridfont.compose({ord("e"): hand[ord("e")]}).keys() == {0xE8, 0xE9, 0xEA, 0xEB}, "only letters that are drawn are made")
+
 # the specimen draws
 with tempfile.TemporaryDirectory() as d:
     p = os.path.join(d, "s.png")
